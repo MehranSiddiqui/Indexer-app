@@ -3,8 +3,14 @@ import { User } from "../generated/prisma/client.js";
 import userRepository from "../repositories/user.repository.js";
 import { hashPassword } from "../utils/PasswordUtils.js";
 import { RegisterInput } from "../validators/auth.validator.js";
+
+type ReturnUser = {
+  id: string;
+  name: string;
+  email: string;
+};
 class AuthService {
-  async registerNewUser(data: RegisterInput): Promise<User> {
+  async registerNewUser(data: RegisterInput): Promise<ReturnUser> {
     const existingUser = await userRepository.findByIdOrEmail({
       email: data?.email,
     });
