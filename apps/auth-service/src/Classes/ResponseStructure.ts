@@ -27,9 +27,9 @@ export class ErrorResponse {
 export class AppError extends Error {
   public readonly code: number;
   public readonly isOperational: boolean;
-  constructor(message: string, stasusCode = 500) {
+  constructor(message: string, stausCode = 500) {
     super(message);
-    this.code = stasusCode;
+    this.code = stausCode;
     this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
   }
