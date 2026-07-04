@@ -1,11 +1,12 @@
 import { Router } from "express";
 import authRoute from "../routes/authRoutes.js";
+import { appOptions } from "../constants/app.constants.js";
 interface RouterConfig {
   path: string;
   router: Router;
 }
 
-const API_PREFIX = "/api/v1";
+const API_PREFIX = appOptions?.API_PREFIX;
 
 export class RegisterRoutes {
   private routes: RouterConfig[] = [];

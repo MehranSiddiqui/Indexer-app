@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
+import { authConstants } from "../constants/auth.constants.js";
 
 export const hashPassword = async (password: string): Promise<string> => {
-  return await bcrypt.hash(password, 12);
+  return await bcrypt.hash(password, authConstants.PASSWORD_HASH_ROUNDS);
 };
 
 export const comparePassword = async (
