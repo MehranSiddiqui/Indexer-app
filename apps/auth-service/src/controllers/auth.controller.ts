@@ -1,18 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import AuthService from "../services/AuthService.js";
 import { ResponseSuccessStructure } from "../Classes/ResponseStructure.js";
-
+import { RegisterResponseDTO } from "../DTO/auth/RegisterResponse.dto.js";
 class AuthController {
   async register(req: Request, res: Response): Promise<void> {
     const user = await AuthService.registerNewUser(req.body);
-    const dataObject = {
-      id: user?.id,
-      name: user?.name,
-      email: user?.email,
-    };
+    const response = new RegisterResponseDTO(user);
     res
       .status(201)
-      .json(new ResponseSuccessStructure(dataObject, "User Created", 201));
+      .json(new ResponseSuccessStructure(response, "User Created", 201));
   }
 }
 
