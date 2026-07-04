@@ -1,15 +1,16 @@
+import { AppError } from "../Classes/ResponseStructure.js";
 import { User } from "../generated/prisma/client.js";
 import userRepository from "../repositories/user.repository.js";
-import { RegisterPayloadDTO } from "../types/auth.types.js";
 import { hashPassword } from "../utils/PasswordUtils.js";
+import { RegisterInput } from "../validators/auth.validator.js";
 class AuthService {
-  async registerNewUser(data: RegisterPayloadDTO): Promise<User> {
+  async registerNewUser(data: RegisterInput): Promise<User> {
     const existingUser = await userRepository.findByIdOrEmail({
       email: data?.email,
     });
 
     if (existingUser) {
-      throw new Error("User with this Email already exists");
+      throw new AppError("User with this Email already exists", 409);
     }
     const hashedPassword = await hashPassword(data?.password);
     const createUser = await userRepository.create({
@@ -17,7 +18,7 @@ class AuthService {
       password: hashedPassword,
     });
 
-    if (!createUser) throw new Error("Unable to create user");
+    if (!createUser) throw new AppError("Unable to create user", 400);
     return createUser;
   }
 }

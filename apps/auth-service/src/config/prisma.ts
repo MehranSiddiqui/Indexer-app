@@ -1,4 +1,14 @@
 import { PrismaClient } from "../generated/prisma/client.js";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
+import { env } from "./env.js";
+
+const pool = new Pool({
+  connectionString: env.DATABASE_URL,
+});
+
+const adapter= new PrismaPg(pool)
+
 
 declare global {
   var prisma: PrismaClient | undefined;
@@ -9,9 +19,9 @@ const globalForPrisma = globalThis as typeof globalThis & {
 };
 
 export const prisma =
-  globalForPrisma.prisma ||
+  globalForPrisma.prisma ??
   new PrismaClient({
-    accelerateUrl: process.env.PRISMA_ACCELERATE_URL ?? "",
+    adapter,
     log: ["query", "warn", "error"],
   });
 
