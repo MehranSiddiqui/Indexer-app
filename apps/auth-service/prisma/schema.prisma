@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//DB STRUCTURE FOR REFRESH TOKEN TABLE
+model RefresToken{
+  id String @id @default(uuid())
+  token String
+  expiresAt DateTime
+  revoked Boolean @default(false)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  createdAt DateTime @default(now())
+}
+
+//DB STRUCTURE FOR Email verification TABLE
+model EmailVerification{
+  id String @id @default(uuid())
+  token String @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+}
+
+//DB STRUCTURE FOR Password Reset TABLE
+model PasswordResets{
+  id String @id @default(uuid())
+  token String @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+}
+
+
+//DB STRUCTURE FOR User TABLE
+model User{
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  password String
+  isVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  refreshToken RefresToken[]
+  emailVerification EmailVerification[]
+  passwordResets PasswordResets[]
+}
+
