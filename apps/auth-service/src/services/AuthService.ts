@@ -63,7 +63,7 @@ class AuthService {
     );
 
     if (!isValidPassword) {
-      throw new AppError("Invalid password!", 401);
+      throw new AppError("Invalid password!", 400);
     }
 
     const authToken = generateAccessToken({
