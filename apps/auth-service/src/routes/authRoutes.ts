@@ -18,6 +18,9 @@ authRoute.post(
   asyncHandler(authController.login.bind(authController)),
 );
 
-// authRoute.post("/refresh");
+authRoute.post(
+  "/refresh",
+  asyncHandler(authController.refreshToken.bind(authController)),
+);
 
 export default authRoute;

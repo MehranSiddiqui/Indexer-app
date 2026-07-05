@@ -3,6 +3,7 @@ import AuthService from "../services/AuthService.js";
 import { ResponseSuccessStructure } from "../Classes/ResponseStructure.js";
 import { RegisterResponseDTO } from "../DTO/auth/RegisterResponse.dto.js";
 import { User } from "../generated/prisma/client.js";
+import { cookieOptions } from "../constants/cookie.constants.js";
 
 class AuthController {
   async register(req: Request, res: Response): Promise<void> {
@@ -15,13 +16,19 @@ class AuthController {
 
   async login(req: Request, res: Response): Promise<void> {
     const user = await AuthService.loginUser(req.body);
+    res.cookie("refresh_token", user.refreshToken, cookieOptions);
     res
       .status(200)
       .json(new ResponseSuccessStructure(user, "User logged in", 200));
   }
 
   async refreshToken(req: Request, res: Response): Promise<void> {
-    
+    const token = req.cookies.refresh_token;
+    const user = await AuthService.rotateRefreshToken(token);
+    res.cookie("refresh_token", user.refreshToken, cookieOptions);
+    res
+      .status(200)
+      .json(new ResponseSuccessStructure(user, "Tokens refreshed", 200));
   }
 }
 
