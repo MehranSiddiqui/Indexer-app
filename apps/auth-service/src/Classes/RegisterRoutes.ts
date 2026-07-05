@@ -16,7 +16,8 @@ export class RegisterRoutes {
   }
 
   addRoutes(): void {
-    this.register("/auth/register", authRoute);
+    this.register("/auth", authRoute);
+    
   }
 
   getRoutes(): RouterConfig[] {

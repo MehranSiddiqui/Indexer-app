@@ -15,7 +15,7 @@ datasource db {
 //DB STRUCTURE FOR REFRESH TOKEN TABLE
 model RefresToken{
   id String @id @default(uuid())
-  token String
+  token String @unique
   expiresAt DateTime
   revoked Boolean @default(false)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

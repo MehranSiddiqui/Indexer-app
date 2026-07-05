@@ -9,7 +9,7 @@ export const errorHandler: ErrorRequestHandler = (
   res,
 _next
 ): void => {
-console.log("Error middleware hit");
+console.log("Error middleware hit",err);
   
   if (err instanceof AppError) {
     res.status(err.code).json(new ErrorResponse(err.message, err.code));
