@@ -1,7 +1,11 @@
 import { AppError } from "../Classes/ResponseStructure.js";
 import { authConstants } from "../constants/auth.constants.js";
 import { cookieOptions } from "../constants/cookie.constants.js";
-import { LoginRequestDTO, LoginResponse } from "../DTO/auth/Login.dto.js";
+import {
+  LoginRequestDTO,
+  LoginResponse,
+  UserDetailDTO,
+} from "../DTO/auth/Login.dto.js";
 import { User } from "../generated/prisma/client.js";
 import refreshTokenRepository from "../repositories/refreshToke.repository.js";
 import userRepository from "../repositories/user.repository.js";
@@ -29,6 +33,8 @@ type RefreshDTO = {
   accessToken: string;
   refreshToken: string;
 };
+
+type UserDetails = ReturnUser & { createdAt: Date };
 class AuthService {
   async registerNewUser(data: RegisterInput): Promise<ReturnUser> {
     const existingUser = await userRepository.findByIdOrEmail({
@@ -150,6 +156,14 @@ class AuthService {
       throw new AppError("Unauthorized user", 401);
 
     await refreshTokenRepository.revokeRefreshToken(tokenObj.id);
+  }
+
+  async getUserDetails(id: string): Promise<UserDetailDTO> {
+    const user = await userRepository.findByIdOrEmail({ id });
+
+    if (!user) throw new AppError("User not found", 404);
+
+    return new UserDetailDTO(user);
   }
 }
 

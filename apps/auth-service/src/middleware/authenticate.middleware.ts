@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { AppError } from "../Classes/ResponseStructure.js";
 import { verifyAccessToken } from "../utils/JWTUtils.js";
 
-export const authticate = (
+export const authenticate = (
   req: Request,
   _res: Response,
   next: NextFunction,
@@ -19,6 +19,7 @@ export const authticate = (
     if (!token) throw new AppError("Access token missing", 401);
     const verifyToken = verifyAccessToken(token);
     req.user = verifyToken;
+
     next();
   } catch (error) {
     if (error instanceof AppError) return next(error);

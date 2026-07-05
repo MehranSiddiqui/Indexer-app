@@ -39,6 +39,13 @@ class AuthController {
       .status(200)
       .json(new ResponseSuccessStructure(null, "User logged out", 200));
   }
+
+  async getCurrentUser(req: Request, res: Response): Promise<void> {
+    const id = req.user.id;
+
+    const user = await AuthService.getUserDetails(id);
+    res.status(200).json(new ResponseSuccessStructure(user, "User found", 200));
+  }
 }
 
 const authController = new AuthController();

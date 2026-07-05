@@ -3,6 +3,7 @@ import authController from "../controllers/auth.controller.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { validate } from "../middleware/validation.middleware.js";
 import { loginSchema, registerSchema } from "../validators/auth.validator.js";
+import { authenticate } from "../middleware/authenticate.middleware.js";
 
 const authRoute = Router();
 
@@ -26,5 +27,11 @@ authRoute.post(
 authRoute.post(
   "/logout",
   asyncHandler(authController.logout.bind(authController)),
+);
+
+authRoute.get(
+  "/profile",
+  authenticate,
+  authController.getCurrentUser.bind(authController),
 );
 export default authRoute;

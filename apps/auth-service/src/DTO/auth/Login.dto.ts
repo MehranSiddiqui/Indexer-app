@@ -22,3 +22,17 @@ export type LoginResult = {
   accessToken: string;
   refreshToken: string;
 };
+
+export class UserDetailDTO {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: Date;
+
+  constructor(user: Pick<User, "id" | "email" | "name" | "createdAt">) {
+    this.id = user.id;
+    this.email = user.email;
+    this.name = user.name;
+    this.createdAt = user.createdAt;
+  }
+}
