@@ -30,6 +30,15 @@ class AuthController {
       .status(200)
       .json(new ResponseSuccessStructure(user, "Tokens refreshed", 200));
   }
+
+  async logout(req: Request, res: Response): Promise<void> {
+    const token = req.cookies.refresh_token;
+    await AuthService.logoutUser(token);
+    res.clearCookie("refresh_token", cookieOptions);
+    res
+      .status(200)
+      .json(new ResponseSuccessStructure(null, "User logged out", 200));
+  }
 }
 
 const authController = new AuthController();

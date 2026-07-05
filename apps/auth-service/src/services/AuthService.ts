@@ -95,7 +95,7 @@ class AuthService {
   }
 
   async rotateRefreshToken(refreshToken: string): Promise<RefreshDTO> {
-    if (!refreshToken) throw new AppError("Refresh token is required", 401);
+    if (!refreshToken) throw new AppError("User Unauthorized", 401);
 
     const decoded = verifyRefreshToken(refreshToken);
 
@@ -135,6 +135,21 @@ class AuthService {
       accessToken: generateNewAccessToken,
       refreshToken: generateNewRefreshToken,
     };
+  }
+
+  async logoutUser(refreshToken: string): Promise<void> {
+    if (!refreshToken) throw new AppError("Refresh token is required!", 401);
+    const decoded = verifyRefreshToken(refreshToken);
+    if (!decoded) throw new AppError("Invalid refresh token", 401);
+    const tokenObj =
+      await refreshTokenRepository.getRefreshTokenByToken(refreshToken);
+    if (!tokenObj) throw new AppError("Refresh token not found", 404);
+    if (tokenObj?.revoked)
+      throw new AppError("Refresh token already revoked!", 401);
+    if (tokenObj.userId !== decoded.id)
+      throw new AppError("Unauthorized user", 401);
+
+    await refreshTokenRepository.revokeRefreshToken(tokenObj.id);
   }
 }
 

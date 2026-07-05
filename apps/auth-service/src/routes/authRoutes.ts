@@ -23,4 +23,8 @@ authRoute.post(
   asyncHandler(authController.refreshToken.bind(authController)),
 );
 
+authRoute.post(
+  "/logout",
+  asyncHandler(authController.logout.bind(authController)),
+);
 export default authRoute;
