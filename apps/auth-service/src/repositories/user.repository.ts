@@ -19,8 +19,17 @@ class UserRepository {
     });
   }
 
-  async create(data: Prisma.UserCreateInput): Promise<User | null> {
-    return await prisma.user.create({ data });
+  async create(
+    data: Prisma.UserCreateInput,
+  ): Promise<Prisma.UserGetPayload<{ select: { id: true; name: true; email: true } }>> {
+    return await prisma.user.create({
+      data,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
   }
 
   async verify(id: string): Promise<User | null> {

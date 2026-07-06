@@ -7,7 +7,10 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "compose:up": "docker compose up -d",
+    "compose:down": "docker compose down -d"
+  
   },
   "keywords": [],
   "author": "",
@@ -15,7 +18,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.9.0",
+      "version": "11.9.0",
       "onFail": "download"
     }
   },
