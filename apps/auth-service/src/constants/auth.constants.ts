@@ -6,4 +6,5 @@ export const authConstants = {
   ACCESS_TOKEN_COOKIE_NAME: `${env.NODE_ENV}-authToken`,
   REFRESH_TOKEN_COOKIE_NAME: `${env.NODE_ENV}-refreshToken`,
   PASSWORD_HASH_ROUNDS: 12 as const,
+  VERIFICATION_EMAIL_EXPIRY: 15*60*1000,
 };

@@ -46,6 +46,23 @@ class AuthController {
     const user = await AuthService.getUserDetails(id);
     res.status(200).json(new ResponseSuccessStructure(user, "User found", 200));
   }
+
+  async handleEmailVerification(req: Request, res: Response): Promise<void> {
+    const tokenParam = req.query.token as string | string[] | undefined;
+    const token = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
+
+    if (!token) {
+      res
+        .status(400)
+        .json(new ResponseSuccessStructure(null, "Missing token", 400));
+      return;
+    }
+
+    await AuthService.verifyEmail(token);
+    res
+      .status(200)
+      .json(new ResponseSuccessStructure(null, "Email verified", 200));
+  }
 }
 
 const authController = new AuthController();

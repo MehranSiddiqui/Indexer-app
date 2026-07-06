@@ -34,4 +34,9 @@ authRoute.get(
   authenticate,
   authController.getCurrentUser.bind(authController),
 );
+
+authRoute.get(
+  "/verify",
+  authController.handleEmailVerification.bind(authController),
+);
 export default authRoute;

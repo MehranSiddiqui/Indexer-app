@@ -8,8 +8,8 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "componse:up": "docker compose up -d",
-    "componse:down": "docker compose down -d"
+    "compose:up": "docker compose up -d",
+    "compose:down": "docker compose down -d"
   
   },
   "keywords": [],

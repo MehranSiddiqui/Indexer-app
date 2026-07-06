@@ -1,4 +1,5 @@
 import { AppError } from "../Classes/ResponseStructure.js";
+import { env } from "../config/env.js";
 import { authConstants } from "../constants/auth.constants.js";
 import { cookieOptions } from "../constants/cookie.constants.js";
 import {
@@ -7,14 +8,18 @@ import {
   UserDetailDTO,
 } from "../DTO/auth/Login.dto.js";
 import { User } from "../generated/prisma/client.js";
+import resendProvider from "../providers/email/resend.provider.js";
+import emailVerificationRepository from "../repositories/emailVerification.repository.js";
 import refreshTokenRepository from "../repositories/refreshToke.repository.js";
 import userRepository from "../repositories/user.repository.js";
+import { generateVerificationEmailTemplate } from "../templates/email/verificationEmail.template.js";
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/JWTUtils.js";
 import { comparePassword, hashPassword } from "../utils/PasswordUtils.js";
+import { generateRandomToken } from "../utils/randomTokenGenerator.js";
 import { RegisterInput, LoginInput } from "../validators/auth.validator.js";
 
 type ReturnUser = {
@@ -51,6 +56,34 @@ class AuthService {
     });
 
     if (!createUser) throw new AppError("Unable to create user", 400);
+
+    //Generating Email Verification flow
+
+    const randomToken = generateRandomToken();
+    const expiry = new Date(
+      Date.now() + authConstants.VERIFICATION_EMAIL_EXPIRY,
+    );
+    await emailVerificationRepository.createEmailVerificationToken({
+      userId: createUser?.id,
+      token: randomToken,
+      expiresAt: expiry,
+    });
+    const urlForVerification = `${env.FRONTEND_URL}${env.EMAIL_VERIFICATION_PATH}?token=${randomToken}`;
+
+    const getEmailToSend = generateVerificationEmailTemplate(
+      urlForVerification,
+      data?.name,
+    );
+    try {
+      await resendProvider.sendEmail({
+        to: data?.email,
+        html: getEmailToSend,
+        subject: "Verify your email address",
+      });
+    } catch (error) {
+      throw new AppError("Failed to send verification email", 500);
+    }
+
     return createUser;
   }
 
@@ -164,6 +197,29 @@ class AuthService {
     if (!user) throw new AppError("User not found", 404);
 
     return new UserDetailDTO(user);
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    if (!token) throw new AppError("Email verification token is required", 400);
+
+    const emailVerificationRecord =
+      await emailVerificationRepository.getEmailVerificationByToken(token);
+
+    if (!emailVerificationRecord)
+      throw new AppError("Invalid email verification token", 400);
+
+    const user = await userRepository.findByIdOrEmail({
+      id: emailVerificationRecord?.userId,
+    });
+    if (!user) throw new AppError("User with this email id not found.", 404);
+    if (user?.isVerified) throw new AppError("Email already verified", 400);
+    if (emailVerificationRecord?.expiresAt < new Date())
+      throw new AppError("Verification token expired", 400);
+    await userRepository.verify(emailVerificationRecord?.userId);
+    await emailVerificationRepository.deleteEmailVerificationToken(
+      emailVerificationRecord?.id,
+    );
+    return;
   }
 }
 
