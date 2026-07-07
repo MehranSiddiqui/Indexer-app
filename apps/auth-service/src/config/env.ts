@@ -11,6 +11,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "qa", "staging", "production"]),
   FRONTEND_URL: z.string(),
   EMAIL_VERIFICATION_PATH: z.string(),
+  FORGOT_PATH: z.string(),
+  LOGIN_PATH: z.string(),
 });
 
 export const env = envSchema.parse(process.env);

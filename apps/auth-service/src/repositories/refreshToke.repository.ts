@@ -36,6 +36,13 @@ class RefreshTokenRepository {
   async deleteRefreshToken(id: string) {
     return await prisma.refresToken.delete({ where: { id } });
   }
+
+  async revokeAllByUserID(userId: string) {
+    return await prisma.refresToken.updateMany({
+      where: { userId },
+      data: { revoked: true },
+    });
+  }
 }
 const refreshTokenRepository = new RefreshTokenRepository();
 export default refreshTokenRepository;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import AuthService from "../services/AuthService.js";
+import AuthService from "../services/auth.service.js";
 import { ResponseSuccessStructure } from "../Classes/ResponseStructure.js";
 import { RegisterResponseDTO } from "../DTO/auth/RegisterResponse.dto.js";
 import { User } from "../generated/prisma/client.js";
@@ -62,6 +62,45 @@ class AuthController {
     res
       .status(200)
       .json(new ResponseSuccessStructure(null, "Email verified", 200));
+  }
+
+  async forgotPasswordByEmail(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+    await AuthService.forgotPassword(email);
+    res
+      .status(200)
+      .json(new ResponseSuccessStructure(null, "Check your email", 200));
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    const { token, newPassword } = req?.body;
+
+    await AuthService.resetPassword(token, newPassword);
+    res
+      .status(200)
+      .json(
+        new ResponseSuccessStructure(
+          null,
+          "Password reset successfully, please login",
+          200,
+        ),
+      );
+  }
+
+  async changePassword(req: Request, res: Response): Promise<void> {
+    const { id } = req.user;
+    const { currentPassword, newPassword } = req.body;
+    await AuthService.changePassword(id, newPassword, currentPassword);
+
+    res
+      .status(200)
+      .json(
+        new ResponseSuccessStructure(
+          null,
+          "Password updated successfully, please login",
+          200,
+        ),
+      );
   }
 }
 

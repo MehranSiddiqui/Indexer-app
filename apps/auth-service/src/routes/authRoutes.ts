@@ -39,4 +39,20 @@ authRoute.get(
   "/verify",
   authController.handleEmailVerification.bind(authController),
 );
+
+authRoute.post(
+  "/forgot-password",
+  authController.forgotPasswordByEmail.bind(authController),
+);
+
+authRoute.post(
+  "/reset-password",
+  authController.resetPassword.bind(authController),
+);
+
+authRoute.patch(
+  "/change-password",
+  authenticate,
+  authController.resetPassword.bind(authController),
+);
 export default authRoute;

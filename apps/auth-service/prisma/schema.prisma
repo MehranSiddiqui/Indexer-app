@@ -46,7 +46,7 @@ model PasswordResets{
 
 //DB STRUCTURE FOR User TABLE
 model User{
-  id String @id @default(uuid())
+  id String @id @unique @default(uuid())
   name String
   email String @unique
   password String

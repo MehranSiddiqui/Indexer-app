@@ -10,8 +10,11 @@ import {
 import { User } from "../generated/prisma/client.js";
 import resendProvider from "../providers/email/resend.provider.js";
 import emailVerificationRepository from "../repositories/emailVerification.repository.js";
+import forgotPasswordRepository from "../repositories/forgotPassword.repository.js";
 import refreshTokenRepository from "../repositories/refreshToke.repository.js";
 import userRepository from "../repositories/user.repository.js";
+import { generateForgotPasswordEmailTemplate } from "../templates/email/forgotpassword.template.js";
+import { generatePasswordUpdateSuccessEmail } from "../templates/email/passwordChanged.template.js";
 import { generateVerificationEmailTemplate } from "../templates/email/verificationEmail.template.js";
 import {
   generateAccessToken,
@@ -39,7 +42,6 @@ type RefreshDTO = {
   refreshToken: string;
 };
 
-type UserDetails = ReturnUser & { createdAt: Date };
 class AuthService {
   async registerNewUser(data: RegisterInput): Promise<ReturnUser> {
     const existingUser = await userRepository.findByIdOrEmail({
@@ -219,6 +221,115 @@ class AuthService {
     await emailVerificationRepository.deleteEmailVerificationToken(
       emailVerificationRecord?.id,
     );
+    return;
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    if (!email) throw new AppError("Email is required", 400);
+    const user = await userRepository.findByIdOrEmail({ email });
+    if (user) {
+      const resetToken = generateRandomToken();
+
+      await forgotPasswordRepository.deleteAllForgotTokenbyUserId(user?.id);
+      await forgotPasswordRepository.createForgotPasswordToken({
+        userId: user?.id,
+        token: resetToken,
+        expiresAt: new Date(
+          Date.now() + authConstants.VERIFICATION_EMAIL_EXPIRY,
+        ),
+      });
+
+      const emailURL = `${env.FRONTEND_URL}${env.FORGOT_PATH}?token=${resetToken}`;
+
+      const getEmailToSend = generateForgotPasswordEmailTemplate(
+        emailURL,
+        user?.name,
+      );
+
+      try {
+        await resendProvider.sendEmail({
+          to: user?.email,
+          html: getEmailToSend,
+          subject: "Reset your password",
+        });
+      } catch (error) {
+        throw new AppError("Failed to send email", 500);
+      }
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const isTokenPresent =
+      await forgotPasswordRepository.getForgotPasswordByToken(token);
+    if (!isTokenPresent || isTokenPresent?.expiresAt < new Date())
+      throw new AppError("Invalid or expired token", 400);
+    const userId = isTokenPresent?.userId;
+    const user = await userRepository.findByIdOrEmail({ id: userId });
+    if (!user) throw new AppError("USer not found", 404);
+    const hashedPassword = await hashPassword(newPassword);
+    const isSamePassword = await comparePassword(newPassword, user?.password);
+    if (isSamePassword)
+      throw new AppError(
+        "New password cannot be the same as the old password",
+        400,
+      );
+    const updatedAt = new Date();
+    await userRepository.updatePassword(userId, hashedPassword, updatedAt);
+    await forgotPasswordRepository.deleteFordotPasswordByToken(token);
+    await refreshTokenRepository.revokeAllByUserID(user?.id);
+    const loginLink = `${env.FRONTEND_URL}${env.LOGIN_PATH}`;
+    const getEmailToSend = generatePasswordUpdateSuccessEmail(
+      user?.name,
+      loginLink,
+    );
+    try {
+      await resendProvider.sendEmail({
+        to: user?.email,
+        html: getEmailToSend,
+        subject: "Password updated!",
+      });
+    } catch (error) {
+      console.log("Update password Email Failed", error);
+    }
+    return;
+  }
+
+  async changePassword(
+    id: string,
+    newPassword: string,
+    currentPassword: string,
+  ): Promise<void> {
+    const user = await userRepository.findByIdOrEmail({ id });
+    if (!user) throw new AppError("User not found!", 404);
+    const currentHash = user?.password;
+    const isCurrentPasswordCorrect = await comparePassword(
+      currentPassword,
+      currentHash,
+    );
+    if (!isCurrentPasswordCorrect)
+      throw new AppError("Current password is incorrect!", 400);
+    const arePasswordSame = await comparePassword(newPassword, currentHash);
+    if (arePasswordSame)
+      throw new AppError("Password cannot be same as previous password!", 400);
+    const hashedPassword = await hashPassword(newPassword);
+    const updatedAt = new Date();
+    await userRepository.updatePassword(id, hashedPassword, updatedAt);
+    await refreshTokenRepository.revokeAllByUserID(id);
+    const loginLink = `${env.FRONTEND_URL}${env.LOGIN_PATH}`;
+
+    const getEmailToSend = generatePasswordUpdateSuccessEmail(
+      user?.name,
+      loginLink,
+    );
+    try {
+      await resendProvider.sendEmail({
+        to: user?.email,
+        html: getEmailToSend,
+        subject: "Password updated!",
+      });
+    } catch (error) {
+      console.log("Update password Email Failed", error);
+    }
     return;
   }
 }
