@@ -102,6 +102,14 @@ class AuthController {
         ),
       );
   }
+
+  async reverifyEmail(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+    await AuthService.resendVerificationMail(email);
+    res
+      .status(200)
+      .json(new ResponseSuccessStructure(null, "Check your email", 200));
+  }
 }
 
 const authController = new AuthController();
