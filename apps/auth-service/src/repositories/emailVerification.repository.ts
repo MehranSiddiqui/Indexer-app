@@ -15,6 +15,12 @@ class EmailVerificationRepository {
   async deleteEmailVerificationToken(id: string) {
     return await prisma.emailVerification.delete({ where: { id } });
   }
+
+  async findTokenByUserId(userId: string) {
+    return await prisma.emailVerification.findUnique({ where: { userId } });
+  }
+
+
 }
 
 const emailVerificationRepository = new EmailVerificationRepository();
