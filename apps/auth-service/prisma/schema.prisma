@@ -30,7 +30,7 @@ model EmailVerification{
   expiresAt DateTime
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  userId String @unique
 }
 
 //DB STRUCTURE FOR Password Reset TABLE
