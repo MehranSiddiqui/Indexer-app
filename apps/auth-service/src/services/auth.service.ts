@@ -332,6 +332,48 @@ class AuthService {
     }
     return;
   }
+
+  async resendVerificationMail(email: string): Promise<void> {
+    const user = await userRepository.findByIdOrEmail({ email });
+    if (!user) throw new AppError("User not found", 404);
+    const isUserVerified = user?.isVerified;
+    if (isUserVerified) throw new AppError("Email already verified!", 400);
+    const existingToken = await emailVerificationRepository.findTokenByUserId(
+      user?.id,
+    );
+    if (existingToken)
+      await emailVerificationRepository.deleteEmailVerificationToken(
+        existingToken?.id,
+      );
+
+    const randomToken = generateRandomToken();
+    const expiry = new Date(
+      Date.now() + authConstants.VERIFICATION_EMAIL_EXPIRY,
+    );
+
+    await emailVerificationRepository.createEmailVerificationToken({
+      userId: user?.id,
+      token: randomToken,
+      expiresAt: expiry,
+    });
+    const urlForVerification = `${env.FRONTEND_URL}${env.EMAIL_VERIFICATION_PATH}?token=${randomToken}`;
+
+    const getEmailToSend = generateVerificationEmailTemplate(
+      urlForVerification,
+      user?.name,
+    );
+    try {
+      await resendProvider.sendEmail({
+        to: user?.email,
+        html: getEmailToSend,
+        subject: "Verify your email address",
+      });
+    } catch (error) {
+      throw new AppError("Failed to send verification email", 500);
+    }
+
+    return;
+  }
 }
 
 export default new AuthService();
