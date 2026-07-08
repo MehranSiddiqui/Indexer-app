@@ -55,4 +55,9 @@ authRoute.patch(
   authenticate,
   authController.resetPassword.bind(authController),
 );
+
+authRoute.post(
+  "/resend-verification",
+  authController.reverifyEmail.bind(authController),
+);
 export default authRoute;
