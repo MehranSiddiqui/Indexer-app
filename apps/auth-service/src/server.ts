@@ -1,8 +1,19 @@
 import dotenv from "dotenv";
-import app from "./app.js";
 dotenv.config();
+
+import app from "./app.js";
+import { connectRedis } from "./config/redis.js";
 const PORT = Number(process.env.PORT) || 4001;
 
-app.listen(PORT, (): void => {
-  console.log(`AUTH SERVER IS UP ON ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectRedis();
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Error starting server:", error);
+  }
+};
+
+startServer();

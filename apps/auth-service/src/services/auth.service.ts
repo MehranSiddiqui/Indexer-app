@@ -1,3 +1,4 @@
+import Redis from "ioredis";
 import { AppError } from "../Classes/ResponseStructure.js";
 import { env } from "../config/env.js";
 import { authConstants } from "../constants/auth.constants.js";
@@ -24,6 +25,7 @@ import {
 import { comparePassword, hashPassword } from "../utils/PasswordUtils.js";
 import { generateRandomToken } from "../utils/randomTokenGenerator.js";
 import { RegisterInput, LoginInput } from "../validators/auth.validator.js";
+import { getRedisClient } from "../config/redis.js";
 
 type ReturnUser = {
   id: string;
@@ -41,7 +43,7 @@ type RefreshDTO = {
   accessToken: string;
   refreshToken: string;
 };
-
+const USER_CACHE_TTL = 60 * 15; // 15 minutes
 class AuthService {
   async registerNewUser(data: RegisterInput): Promise<ReturnUser> {
     const existingUser = await userRepository.findByIdOrEmail({
@@ -90,17 +92,18 @@ class AuthService {
   }
 
   async loginUser(data: LoginInput): Promise<LoginResult> {
+    const redis = getRedisClient();
     const userExist = await userRepository.findByIdOrEmail({
-      email: data?.email,
+      email: data.email,
     });
+
     if (!userExist) {
-      throw new AppError("User with this email dows not exist!", 401);
+      throw new AppError("User with this email does not exist!", 401);
     }
-    const plainPassword = data?.password;
 
     const isValidPassword = await comparePassword(
-      plainPassword,
-      userExist?.password,
+      data.password,
+      userExist.password,
     );
 
     if (!isValidPassword) {
@@ -108,15 +111,17 @@ class AuthService {
     }
 
     const authToken = generateAccessToken({
-      email: data?.email,
-      id: userExist?.id,
+      email: userExist.email,
+      id: userExist.id,
     });
+
     const refreshToken = generateRefreshToken({
-      email: data?.email,
-      id: userExist?.id,
+      email: userExist.email,
+      id: userExist.id,
     });
 
     const expiresAt = new Date(Date.now() + cookieOptions.maxAge);
+
     await refreshTokenRepository.create({
       token: refreshToken,
       expiresAt,
@@ -127,12 +132,29 @@ class AuthService {
       },
     });
 
-    return {
-      createdAt: userExist?.createdAt,
-      user: new LoginResponse(userExist),
+    const userResponse = new LoginResponse(userExist);
+
+    const returnableObject: LoginResult = {
+      createdAt: userExist.createdAt,
+      user: userResponse,
       accessToken: authToken,
-      refreshToken: refreshToken,
+      refreshToken,
     };
+
+    const cacheKey = `user:${userExist.id}`;
+
+    try {
+      await redis.set(
+        cacheKey,
+        JSON.stringify({ ...userResponse, createdAt: userExist?.createdAt }),
+        "EX",
+        USER_CACHE_TTL,
+      );
+    } catch (error) {
+      console.error("Failed to cache user:", error);
+    }
+
+    return returnableObject;
   }
 
   async rotateRefreshToken(refreshToken: string): Promise<RefreshDTO> {
@@ -179,24 +201,75 @@ class AuthService {
   }
 
   async logoutUser(refreshToken: string): Promise<void> {
-    if (!refreshToken) throw new AppError("Refresh token is required!", 401);
+    const redis = getRedisClient();
+    if (!refreshToken) {
+      throw new AppError("Refresh token is required!", 401);
+    }
+
     const decoded = verifyRefreshToken(refreshToken);
-    if (!decoded) throw new AppError("Invalid refresh token", 401);
+
+    if (!decoded) {
+      throw new AppError("Invalid refresh token", 401);
+    }
+
     const tokenObj =
       await refreshTokenRepository.getRefreshTokenByToken(refreshToken);
-    if (!tokenObj) throw new AppError("Refresh token not found", 404);
-    if (tokenObj?.revoked)
+
+    if (!tokenObj) {
+      throw new AppError("Refresh token not found", 404);
+    }
+
+    if (tokenObj.revoked) {
       throw new AppError("Refresh token already revoked!", 401);
-    if (tokenObj.userId !== decoded.id)
+    }
+
+    if (tokenObj.userId !== decoded.id) {
       throw new AppError("Unauthorized user", 401);
+    }
+
+    try {
+      await redis.del(`user:${tokenObj.userId}`);
+    } catch (error) {
+      console.error("Redis DEL failed:", error);
+    }
 
     await refreshTokenRepository.revokeRefreshToken(tokenObj.id);
   }
 
   async getUserDetails(id: string): Promise<UserDetailDTO> {
+    const cacheKey = `user:${id}`;
+    const redis = getRedisClient();
+    try {
+      const redisUser = await redis.get(cacheKey);
+
+      if (redisUser) {
+
+        return new UserDetailDTO(JSON.parse(redisUser));
+      }
+
+    } catch (error) {
+      console.error("Redis GET failed:", error);
+    }
+
     const user = await userRepository.findByIdOrEmail({ id });
 
-    if (!user) throw new AppError("User not found", 404);
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    try {
+      await redis.set(
+        cacheKey,
+        JSON.stringify({
+          ...new LoginResponse(user),
+          createAt: user?.createdAt,
+        }),
+        "EX",
+        USER_CACHE_TTL,
+      );
+    } catch (error) {
+      console.error("Redis SET failed:", error);
+    }
 
     return new UserDetailDTO(user);
   }
