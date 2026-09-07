@@ -11,6 +11,12 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "qa", "staging", "production"]),
   FRONTEND_URL: z.string(),
   EMAIL_VERIFICATION_PATH: z.string(),
+  FORGOT_PATH: z.string(),
+  LOGIN_PATH: z.string(),
+  REDIS_HOST: z.string(),
+  REDIS_PORT: z.string().default("6379"),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_DB: z.string().default("0"),
 });
 
 export const env = envSchema.parse(process.env);

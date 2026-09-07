@@ -21,7 +21,9 @@ class UserRepository {
 
   async create(
     data: Prisma.UserCreateInput,
-  ): Promise<Prisma.UserGetPayload<{ select: { id: true; name: true; email: true } }>> {
+  ): Promise<
+    Prisma.UserGetPayload<{ select: { id: true; name: true; email: true } }>
+  > {
     return await prisma.user.create({
       data,
       select: {
@@ -36,6 +38,17 @@ class UserRepository {
     return await prisma.user.update({
       where: { id },
       data: { isVerified: true },
+    });
+  }
+
+  async updatePassword(
+    id: string,
+    password: string,
+    updatedAt: Date,
+  ): Promise<User | null> {
+    return await prisma.user.update({
+      where: { id },
+      data: { password, updatedAt },
     });
   }
 }
