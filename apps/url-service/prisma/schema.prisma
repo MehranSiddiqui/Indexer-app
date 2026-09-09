@@ -1,0 +1,31 @@
+generator client{
+    provider="prisma-client"
+    output="../src/generated/prisma"
+}
+
+datasource db{
+    provider = "postgresql"
+}
+
+
+//DB STRUCTURE FOR PROJECTS
+model Project{
+    id String @id @default(uuid())
+    name String
+    description String
+    url String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+//DB STRUCTURE FOR URLS
+model Url{
+    id String @id @default(uuid())
+    userId String
+    url String
+    normalizedUrl String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    @@unique([userId, normalizedUrl])
+    @@index([userId])
+}

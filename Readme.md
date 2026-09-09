@@ -197,6 +197,50 @@
 
 API Gateway → URL Submission Service → Queue Service → Worker Service → Reporting Service → Notification Service
 
+---
+
+# URL Submission Service — Development Handover
+
+> Rebuilt from scratch (previous scaffold discarded). Same mentoring style as Auth Service.
+
+## Project Architecture
+
+- Same layering as Auth Service: **Controller → Service → Repository → Prisma Database**
+- Deliberate deviation: Repository layer uses **hand-written raw SQL** via `prisma.$queryRaw`/`$executeRaw` instead of Prisma's fluent query API — a learning choice so SQL is written and understood directly, not generated
+- Prisma is still used for schema definition, migrations, and as the execution engine underneath the raw queries
+- Database-per-service boundary: url-service's database holds only what url-service owns. Job processing state (once Queue/Worker Service exists) will live in that service's own database, not here — url-service will only persist a `Url` and, later, publish an event for it to be picked up
+
+## Milestone 1 — Project Setup (Day 1)
+
+- Scaffolded `package.json`, `tsconfig.json`
+- `tsconfig.json` now extends the shared monorepo config (`packages/config/tsconfig/tsconfig.json`), same as auth-service — it had been left as the raw Prisma-generated default, which caused a real type error (`exactOptionalPropertyTypes` rejecting `prisma.config.ts`'s `datasource.url: string | undefined`)
+- Centralized env access through `src/config/env.ts` (zod-validated) instead of reading `process.env` directly in `app.ts`/`server.ts`
+- Fixed a zod schema key-casing bug (`port` vs `PORT`) that would have crashed on import
+- Fixed `/health` route — handler had no `(req, res)` signature and never sent a response, so it would hang indefinitely
+- Cleaned up dead code carried over from copy-pasting auth-service (unused `PORT` const, stray `connectRedis()` comment, inverted `dependencies`/`devDependencies`)
+
+### Schema design decisions
+- **Dropped `Project` and `IndexingJob` from scope.** Considered keeping `Project` (domain grouping, ownership verification, per-domain rate limiting) but no current requirement needs it — deferred until domain-ownership verification is an actual feature ("maybe later")
+- **`IndexingJob` belongs to Queue/Worker Service**, not url-service, once that service exists — avoids blurring database-per-service boundaries
+- **URL normalization** (for the dedup key `normalizedUrl`, not the stored raw `url`): lowercase host, collapse `www.` prefix, collapse `http`/`https` scheme, strip tracking query params (`utm_*` etc.), strip trailing slash. Rationale: the service's purpose is fast crawling/indexing, not SEO canonical-state tracking, so collapsing scheme/www for dedup purposes is acceptable (unlike classic SEO normalization, where those distinctions matter)
+- **Dedup scope: per-user** (`@@unique([userId, normalizedUrl])`), not global. Two different users submitting the same URL currently creates two rows (and, eventually, two crawl jobs). Global dedup (one canonical row + a separate submission-tracking table) deferred until Queue/Worker exists and redundant-crawl cost is observable
+
+### Current schema (`prisma/schema.prisma`)
+```
+Url
+  id, userId, url, normalizedUrl, createdAt, updatedAt
+  @@unique([userId, normalizedUrl])
+  @@index([userId])
+```
+
+## Open items carried into Day 2
+
+- `Project` model is still physically present in `schema.prisma`, fully disconnected (no relation, no `userId`) — pending decision: delete it now, or keep as a placeholder for later
+- `prisma migrate dev` not run yet — schema needs to be finalized first
+- `src/config/prisma.ts` not built yet (PrismaClient + `@prisma/adapter-pg` + `pg.Pool`, mirroring auth-service's singleton pattern) — blocked on migration
+- Rest of `src/` folder skeleton not built: `constants`, `controllers`, `services`, `repositories`, `routes`, `DTO`, `types`, `utils`, `validators`
+- Cross-service authentication approach undecided: does url-service verify the auth-service-issued JWT locally (needs a shared `JWT_ACCESS_SECRET`), or call auth-service's API per request to validate the session?
+
 ## User Preferences for Mentoring
 
 - Never provide code unless explicitly requested
