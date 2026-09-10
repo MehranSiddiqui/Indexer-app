@@ -3,9 +3,6 @@ export interface URLCreateArgument {
   url: string;
 }
 
-export interface URLArgument extends URLCreateArgument {
-  normalizedUrl: string;
-}
 
 export interface GET_URL {
   userId: string;
