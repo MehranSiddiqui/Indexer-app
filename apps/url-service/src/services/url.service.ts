@@ -2,6 +2,7 @@ import { AppError } from "@rocket/shared";
 import {
   GET_URL,
   GET_URL_BY_ID,
+  GET_URL_BY_NORMALIZED_URL,
   ReturnUrl,
   URLCreateArgument,
 } from "../DTO/CreateURL.DTO.js";
@@ -18,7 +19,10 @@ class UrlService {
     });
     return createNewURL;
   }
-
+  async getUrlByNormalizedURL(data: GET_URL_BY_NORMALIZED_URL): Promise<Url> {
+    const url = await urlRepository.findURLByNormalize(data);
+    return url;
+  }
   async getUrlById(data: GET_URL_BY_ID): Promise<Url> {
     const url = await urlRepository.findURLById({
       id: data?.id,

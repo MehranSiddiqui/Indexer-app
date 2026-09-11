@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { env } from "../config/env.js";
+import urlRoute from "../routes/url.routes.js";
 interface RoutesConfig {
-  path: String;
+  path: string;
   router: Router;
 }
 
@@ -14,9 +15,12 @@ class RouteRegister {
   }
 
   addRoutes() {
-    this.register("/url");
+    this.register("/url", urlRoute);
   }
   getRoutes(): RoutesConfig[] {
     return this.routes;
   }
 }
+
+const routeRegister = new RouteRegister();
+export default routeRegister;
