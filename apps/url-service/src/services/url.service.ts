@@ -2,7 +2,6 @@ import { AppError } from "@rocket/shared";
 import {
   GET_URL,
   GET_URL_BY_ID,
-  GET_URL_BY_NORMALIZED_URL,
   ReturnUrl,
   URLCreateArgument,
 } from "../DTO/CreateURL.DTO.js";
@@ -11,17 +10,17 @@ import { normalizeURL } from "../utils/normalizeURL.utils.js";
 import { Url } from "../generated/prisma/client.js";
 
 class UrlService {
-  async addNewURL(data: URLCreateArgument): Promise<ReturnUrl> {
+  async addNewURL(
+    data: URLCreateArgument,
+  ): Promise<{ url: ReturnUrl; isNewUrl: boolean }> {
     const createNewURL = await urlRepository.createUrl({
       normalizedUrl: normalizeURL(data.url),
       userId: data.userId,
       url: data.url,
     });
-    return createNewURL;
-  }
-  async getUrlByNormalizedURL(data: GET_URL_BY_NORMALIZED_URL): Promise<Url> {
-    const url = await urlRepository.findURLByNormalize(data);
-    return url;
+    const isNewUrl =
+      createNewURL.createdAt.getTime() === createNewURL.updatedAt.getTime();
+    return { url: createNewURL, isNewUrl };
   }
   async getUrlById(data: GET_URL_BY_ID): Promise<Url> {
     const url = await urlRepository.findURLById({

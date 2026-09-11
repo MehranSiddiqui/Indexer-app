@@ -262,7 +262,7 @@ class AuthService {
         cacheKey,
         JSON.stringify({
           ...new LoginResponse(user),
-          createAt: user?.createdAt,
+          createdAt: user?.createdAt,
         }),
         "EX",
         USER_CACHE_TTL,

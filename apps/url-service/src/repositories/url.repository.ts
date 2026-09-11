@@ -1,11 +1,6 @@
 import { Url } from "../generated/prisma/client.js";
 import { prisma } from "../config/prisma.js";
-import {
-  GET_URL,
-  GET_URL_BY_ID,
-  GET_URL_BY_NORMALIZED_URL,
-  URLArgument,
-} from "../DTO/CreateURL.DTO.js";
+import { GET_URL, GET_URL_BY_ID, URLArgument } from "../DTO/CreateURL.DTO.js";
 class UrlRepository {
   async createUrl(data: URLArgument): Promise<Url> {
     const [row] = await prisma.$queryRaw<Url[]>`
@@ -17,15 +12,6 @@ class UrlRepository {
     `;
 
     return row;
-  }
-
-  async findURLByNormalize(data: GET_URL_BY_NORMALIZED_URL) {
-    const [row] = await prisma.$queryRaw<Url[]>`
-    SELECT * FROM "Url" WHERE "normalizedUrl"=${data?.normalizedUrl} and "userId"=${
-      data?.userId
-    } `;
-
-    return row ?? null;
   }
 
   async findURLById(data: GET_URL_BY_ID): Promise<Url | null> {

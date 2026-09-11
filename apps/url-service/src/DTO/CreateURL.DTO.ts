@@ -22,8 +22,3 @@ export type ReturnUrl = {
   id: string;
   url: string;
 };
-
-export interface GET_URL_BY_NORMALIZED_URL {
-  normalizedUrl: string;
-  userId: string;
-}

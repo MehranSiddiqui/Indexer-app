@@ -1,12 +1,15 @@
 import { Router } from "express";
+import { validate } from "@rocket/shared";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import urlController from "../controllers/url.controller.js";
+import { urlValidator } from "../validators/url.validator.js";
 
 const urlRoute = Router();
 
 urlRoute.post(
   "/addUrl",
   authMiddleware,
+  validate(urlValidator),
   urlController.addUrl.bind(urlController),
 );
 

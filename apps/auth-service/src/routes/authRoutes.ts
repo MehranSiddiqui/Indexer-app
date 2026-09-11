@@ -58,7 +58,7 @@ authRoute.post(
 authRoute.patch(
   "/change-password",
   authenticate,
-  authController.resetPassword.bind(authController),
+  authController.changePassword.bind(authController),
 );
 
 authRoute.post(

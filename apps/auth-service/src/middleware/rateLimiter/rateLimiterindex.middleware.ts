@@ -22,22 +22,14 @@ export const rateLimiterMiddleWare =
     const now = Date.now();
 
     let record = memoryStore.get(ip);
-    if (!record) {
-      memoryStore.set(ip, {
+    if (!record || now > record.expiresAt) {
+      record = {
         count: 0,
         expiresAt: now + windowMs,
-      });
-
-      return next();
-    }
-    if (now > record?.expiresAt) {
-      memoryStore.set(ip, {
-        count: 0,
-        expiresAt: now + windowMs,
-      });
+      };
     }
 
-    if (record?.count >= maxRequests) {
+    if (record.count >= maxRequests) {
       const retryAfter = Math.ceil((record.expiresAt - now) / 1000);
 
       res.setHeader("Retry-After", retryAfter);

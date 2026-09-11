@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import urlService from "../services/url.service.js";
 import { ResponseSuccessStructure } from "@rocket/shared";
-import { normalizeURL } from "../utils/normalizeURL.utils.js";
-import logger from "../logger.js";
 
 class UrlController {
   async addUrl(req: Request, res: Response): Promise<void> {
@@ -12,17 +10,15 @@ class UrlController {
       userId,
       url: reqUrl,
     };
-    const checkDBForExistingURLObject = {
-      normalizedUrl: normalizeURL(reqUrl),
-      userId,
-    };
-    const isURLPresent = await urlService.getUrlByNormalizedURL(
-      checkDBForExistingURLObject,
-    );
-    const url = await urlService.addNewURL(requiredObject);
+    const { url, isNewUrl } = await urlService.addNewURL(requiredObject);
 
-    logger.info(isURLPresent)
-    if (isURLPresent) {
+    if (isNewUrl) {
+      res
+        .status(201)
+        .json(
+          new ResponseSuccessStructure(url, "new Url added successfully", 201),
+        );
+    } else {
       res
         .status(200)
         .json(
@@ -31,12 +27,6 @@ class UrlController {
             "Url already exists, recrawl scheduled",
             200,
           ),
-        );
-    } else {
-      res
-        .status(201)
-        .json(
-          new ResponseSuccessStructure(url, "new Url added successfully", 201),
         );
     }
   }
