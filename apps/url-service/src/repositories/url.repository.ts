@@ -14,6 +14,11 @@ class UrlRepository {
     return row;
   }
 
+  async markPublished(data: GET_URL_BY_ID): Promise<void> {
+    await prisma.$executeRaw`
+    UPDATE "Url" SET "publishedAt"=now() WHERE "id"=${data?.id} AND "userId"=${data?.userId}`;
+  }
+
   async findURLById(data: GET_URL_BY_ID): Promise<Url | null> {
     const [row] = await prisma.$queryRaw<Url[]>`
     SELECT * FROM "Url" WHERE "id"=${data?.id} and "userId"=${data?.userId}`;

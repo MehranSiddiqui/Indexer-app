@@ -8,6 +8,7 @@ import {
 import urlRepository from "../repositories/url.repository.js";
 import { normalizeURL } from "../utils/normalizeURL.utils.js";
 import { Url } from "../generated/prisma/client.js";
+import rabbitMQ from "./rabbitMQ/rabbit.service.js";
 
 class UrlService {
   async addNewURL(
@@ -17,6 +18,11 @@ class UrlService {
       normalizedUrl: normalizeURL(data.url),
       userId: data.userId,
       url: data.url,
+    });
+    await rabbitMQ.sendMessage(JSON.stringify(createNewURL));
+    await urlRepository.markPublished({
+      id: createNewURL.id,
+      userId: createNewURL.userId,
     });
     const isNewUrl =
       createNewURL.createdAt.getTime() === createNewURL.updatedAt.getTime();

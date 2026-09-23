@@ -10,6 +10,7 @@ const urlEnvSchema = z.object({
   API_VERSION: z.string(),
   DEFAULT_PAGE_SIZE: z.string(),
   MAX_PAGE_SIZE: z.string(),
+  RABBITMQ_URL: z.url(),
 });
 
 export const env = urlEnvSchema.parse(process.env);
