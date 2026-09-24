@@ -2,27 +2,22 @@ import { AppError } from "@rocket/shared";
 import {
   GET_URL,
   GET_URL_BY_ID,
-  ReturnUrl,
   URLCreateArgument,
 } from "../DTO/CreateURL.DTO.js";
 import urlRepository from "../repositories/url.repository.js";
 import { normalizeURL } from "../utils/normalizeURL.utils.js";
 import { Url } from "../generated/prisma/client.js";
 import rabbitMQ from "./rabbitMQ/rabbit.service.js";
+import logger from "../logger.js";
 
 class UrlService {
   async addNewURL(
     data: URLCreateArgument,
-  ): Promise<{ url: ReturnUrl; isNewUrl: boolean }> {
+  ): Promise<{ url: Url; isNewUrl: boolean }> {
     const createNewURL = await urlRepository.createUrl({
       normalizedUrl: normalizeURL(data.url),
       userId: data.userId,
       url: data.url,
-    });
-    await rabbitMQ.sendMessage(JSON.stringify(createNewURL));
-    await urlRepository.markPublished({
-      id: createNewURL.id,
-      userId: createNewURL.userId,
     });
     const isNewUrl =
       createNewURL.createdAt.getTime() === createNewURL.updatedAt.getTime();
@@ -44,6 +39,26 @@ class UrlService {
       throw new AppError("No urls added by this user!", 404);
 
     return userUrls;
+  }
+
+  async publishUrl(data: Url): Promise<void> {
+    try {
+      await rabbitMQ.sendMessage(JSON.stringify(data));
+      await urlRepository.markPublished({ id: data?.id, userId: data?.userId });
+    } catch (err) {
+      logger.error(
+        { err, urlId: data?.id },
+        "Failed to publish url, will rerun publishing with cron",
+      );
+    }
+  }
+
+  async getUnPublishedURLS(): Promise<void> {
+    const PUBLISH_BATCH_SIZE = 20;
+    const urls = await urlRepository.getUnPublishedUrls(PUBLISH_BATCH_SIZE);
+    for (const url of urls) {
+      await this.publishUrl(url);
+    }
   }
 }
 

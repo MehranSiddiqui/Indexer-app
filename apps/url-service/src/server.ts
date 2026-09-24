@@ -4,6 +4,10 @@ import { env } from "./config/env.js";
 import logger from "./logger.js";
 import rabbitMQ from "./services/rabbitMQ/rabbit.service.js";
 import { closePrisma } from "./config/prisma.js";
+import {
+  startPublishPendingJob,
+  stopPublishPendingJob,
+} from "./jobs/publishPending.jobs.js";
 
 const PORT = Number(env.PORT);
 const SHUTDOWN_TIMEOUT = 10000;
@@ -16,6 +20,7 @@ const startServer = app.listen(PORT, () => {
 const bootstrapApp = async () => {
   try {
     await rabbitMQ.startRabbitMq();
+    startPublishPendingJob();
   } catch (error) {
     logger.error({ err: error }, "Error starting server");
     throw new AppError("Error starting server", 500);
@@ -36,6 +41,7 @@ const gracefulShutDown = (signal: string) => {
     logger.error("Graceful shutdown failed, force shut down implemented.");
     process.exit(1);
   }, SHUTDOWN_TIMEOUT);
+  void stopPublishPendingJob();
   startServer.close(async (err) => {
     if (err)
       logger.error({ err }, "There was an error while closing http server");

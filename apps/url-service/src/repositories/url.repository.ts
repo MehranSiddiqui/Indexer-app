@@ -7,7 +7,7 @@ class UrlRepository {
     INSERT INTO "Url" ("id","normalizedUrl","userId","url","createdAt","updatedAt") VALUES (gen_random_uuid(),${data?.normalizedUrl},${data?.userId},${data?.url},now(),now())
     
     ON CONFLICT ("userId","normalizedUrl")
-    DO UPDATE SET "updatedAt"=now(),"publishedAt"=NULL
+    DO UPDATE SET "updatedAt"=now(),"publishedAt"=NULL 
     RETURNING *
     `;
 
@@ -35,6 +35,14 @@ class UrlRepository {
     SELECT * FROM "Url" WHERE "userId"=${userID}
     ORDER BY "createdAt" DESC
     LIMIT ${limit} OFFSET ${offSet}`;
+  }
+
+  async getUnPublishedUrls(limit: number): Promise<Url[]> {
+    return await prisma.$queryRaw<Url[]>`
+    Select * from "Url" where "publishedAt" is NULL
+    order by "createdAt" ASC
+    limit ${limit}
+    `;
   }
 }
 
