@@ -16,3 +16,10 @@ declare global {
 export const prisma = global.prisma || new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+
+// The pg.Pool passed into PrismaPg is owned by us, not Prisma, so
+// $disconnect() alone won't release it - it must be ended separately.
+export const closePrisma = async (): Promise<void> => {
+  await prisma.$disconnect();
+  await pool.end();
+};
