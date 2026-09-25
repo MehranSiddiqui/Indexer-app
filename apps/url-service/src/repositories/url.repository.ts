@@ -1,6 +1,7 @@
 import { Url } from "../generated/prisma/client.js";
 import { prisma } from "../config/prisma.js";
 import { GET_URL, GET_URL_BY_ID, URLArgument } from "../DTO/CreateURL.DTO.js";
+
 class UrlRepository {
   async createUrl(data: URLArgument): Promise<Url> {
     const [row] = await prisma.$queryRaw<Url[]>`
@@ -13,7 +14,11 @@ class UrlRepository {
 
     return row;
   }
-
+  async increaseAttempt(data: GET_URL_BY_ID): Promise<void> {
+    await prisma.$executeRaw`
+    Update "Url" set "publishAttempts" = "publishAttempts" + 1 where "id"= ${data?.id} and "userId" = ${data?.userId} `;
+  }
+  
   async markPublished(data: GET_URL_BY_ID): Promise<void> {
     await prisma.$executeRaw`
     UPDATE "Url" SET "publishedAt"=now() WHERE "id"=${data?.id} AND "userId"=${data?.userId}`;
@@ -40,7 +45,7 @@ class UrlRepository {
   async getUnPublishedUrls(limit: number): Promise<Url[]> {
     return await prisma.$queryRaw<Url[]>`
     Select * from "Url" where "publishedAt" is NULL
-    order by "createdAt" ASC
+    ORDER BY "publishAttempts" ASC, "createdAt" ASC
     limit ${limit}
     `;
   }

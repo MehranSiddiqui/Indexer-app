@@ -41,6 +41,17 @@ class UrlService {
     return userUrls;
   }
 
+  async incrementPublishAttempts(data: GET_URL_BY_ID): Promise<void> {
+    try {
+      await urlRepository.increaseAttempt(data);
+    } catch (err) {
+      logger.error(
+        { err, urlId: data?.id },
+        "Failed to increment the attempt, will rerun publishing with cron",
+      );
+    }
+  }
+
   async publishUrl(data: Url): Promise<void> {
     try {
       await rabbitMQ.sendMessage(JSON.stringify(data));
@@ -50,6 +61,7 @@ class UrlService {
         { err, urlId: data?.id },
         "Failed to publish url, will rerun publishing with cron",
       );
+      await this.incrementPublishAttempts(data);
     }
   }
 

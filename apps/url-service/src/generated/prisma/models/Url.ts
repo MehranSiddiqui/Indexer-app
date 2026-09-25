@@ -20,8 +20,18 @@ export type UrlModel = runtime.Types.Result.DefaultSelection<Prisma.$UrlPayload>
 
 export type AggregateUrl = {
   _count: UrlCountAggregateOutputType | null
+  _avg: UrlAvgAggregateOutputType | null
+  _sum: UrlSumAggregateOutputType | null
   _min: UrlMinAggregateOutputType | null
   _max: UrlMaxAggregateOutputType | null
+}
+
+export type UrlAvgAggregateOutputType = {
+  publishAttempts: number | null
+}
+
+export type UrlSumAggregateOutputType = {
+  publishAttempts: number | null
 }
 
 export type UrlMinAggregateOutputType = {
@@ -31,6 +41,8 @@ export type UrlMinAggregateOutputType = {
   normalizedUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  publishedAt: Date | null
+  publishAttempts: number | null
 }
 
 export type UrlMaxAggregateOutputType = {
@@ -40,6 +52,8 @@ export type UrlMaxAggregateOutputType = {
   normalizedUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  publishedAt: Date | null
+  publishAttempts: number | null
 }
 
 export type UrlCountAggregateOutputType = {
@@ -49,9 +63,19 @@ export type UrlCountAggregateOutputType = {
   normalizedUrl: number
   createdAt: number
   updatedAt: number
+  publishedAt: number
+  publishAttempts: number
   _all: number
 }
 
+
+export type UrlAvgAggregateInputType = {
+  publishAttempts?: true
+}
+
+export type UrlSumAggregateInputType = {
+  publishAttempts?: true
+}
 
 export type UrlMinAggregateInputType = {
   id?: true
@@ -60,6 +84,8 @@ export type UrlMinAggregateInputType = {
   normalizedUrl?: true
   createdAt?: true
   updatedAt?: true
+  publishedAt?: true
+  publishAttempts?: true
 }
 
 export type UrlMaxAggregateInputType = {
@@ -69,6 +95,8 @@ export type UrlMaxAggregateInputType = {
   normalizedUrl?: true
   createdAt?: true
   updatedAt?: true
+  publishedAt?: true
+  publishAttempts?: true
 }
 
 export type UrlCountAggregateInputType = {
@@ -78,6 +106,8 @@ export type UrlCountAggregateInputType = {
   normalizedUrl?: true
   createdAt?: true
   updatedAt?: true
+  publishedAt?: true
+  publishAttempts?: true
   _all?: true
 }
 
@@ -119,6 +149,18 @@ export type UrlAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: UrlAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: UrlSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: UrlMinAggregateInputType
@@ -149,6 +191,8 @@ export type UrlGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   _count?: UrlCountAggregateInputType | true
+  _avg?: UrlAvgAggregateInputType
+  _sum?: UrlSumAggregateInputType
   _min?: UrlMinAggregateInputType
   _max?: UrlMaxAggregateInputType
 }
@@ -160,7 +204,11 @@ export type UrlGroupByOutputType = {
   normalizedUrl: string
   createdAt: Date
   updatedAt: Date
+  publishedAt: Date | null
+  publishAttempts: number
   _count: UrlCountAggregateOutputType | null
+  _avg: UrlAvgAggregateOutputType | null
+  _sum: UrlSumAggregateOutputType | null
   _min: UrlMinAggregateOutputType | null
   _max: UrlMaxAggregateOutputType | null
 }
@@ -190,6 +238,8 @@ export type UrlWhereInput = {
   normalizedUrl?: Prisma.StringFilter<"Url"> | string
   createdAt?: Prisma.DateTimeFilter<"Url"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Url"> | Date | string
+  publishedAt?: Prisma.DateTimeNullableFilter<"Url"> | Date | string | null
+  publishAttempts?: Prisma.IntFilter<"Url"> | number
 }
 
 export type UrlOrderByWithRelationInput = {
@@ -199,6 +249,8 @@ export type UrlOrderByWithRelationInput = {
   normalizedUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishAttempts?: Prisma.SortOrder
 }
 
 export type UrlWhereUniqueInput = Prisma.AtLeast<{
@@ -212,6 +264,8 @@ export type UrlWhereUniqueInput = Prisma.AtLeast<{
   normalizedUrl?: Prisma.StringFilter<"Url"> | string
   createdAt?: Prisma.DateTimeFilter<"Url"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Url"> | Date | string
+  publishedAt?: Prisma.DateTimeNullableFilter<"Url"> | Date | string | null
+  publishAttempts?: Prisma.IntFilter<"Url"> | number
 }, "id" | "userId_normalizedUrl">
 
 export type UrlOrderByWithAggregationInput = {
@@ -221,9 +275,13 @@ export type UrlOrderByWithAggregationInput = {
   normalizedUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishAttempts?: Prisma.SortOrder
   _count?: Prisma.UrlCountOrderByAggregateInput
+  _avg?: Prisma.UrlAvgOrderByAggregateInput
   _max?: Prisma.UrlMaxOrderByAggregateInput
   _min?: Prisma.UrlMinOrderByAggregateInput
+  _sum?: Prisma.UrlSumOrderByAggregateInput
 }
 
 export type UrlScalarWhereWithAggregatesInput = {
@@ -236,6 +294,8 @@ export type UrlScalarWhereWithAggregatesInput = {
   normalizedUrl?: Prisma.StringWithAggregatesFilter<"Url"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Url"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Url"> | Date | string
+  publishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Url"> | Date | string | null
+  publishAttempts?: Prisma.IntWithAggregatesFilter<"Url"> | number
 }
 
 export type UrlCreateInput = {
@@ -245,6 +305,8 @@ export type UrlCreateInput = {
   normalizedUrl: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  publishedAt?: Date | string | null
+  publishAttempts?: number
 }
 
 export type UrlUncheckedCreateInput = {
@@ -254,6 +316,8 @@ export type UrlUncheckedCreateInput = {
   normalizedUrl: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  publishedAt?: Date | string | null
+  publishAttempts?: number
 }
 
 export type UrlUpdateInput = {
@@ -263,6 +327,8 @@ export type UrlUpdateInput = {
   normalizedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UrlUncheckedUpdateInput = {
@@ -272,6 +338,8 @@ export type UrlUncheckedUpdateInput = {
   normalizedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UrlCreateManyInput = {
@@ -281,6 +349,8 @@ export type UrlCreateManyInput = {
   normalizedUrl: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  publishedAt?: Date | string | null
+  publishAttempts?: number
 }
 
 export type UrlUpdateManyMutationInput = {
@@ -290,6 +360,8 @@ export type UrlUpdateManyMutationInput = {
   normalizedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UrlUncheckedUpdateManyInput = {
@@ -299,6 +371,8 @@ export type UrlUncheckedUpdateManyInput = {
   normalizedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
 }
 
 export type UrlUserIdNormalizedUrlCompoundUniqueInput = {
@@ -313,6 +387,12 @@ export type UrlCountOrderByAggregateInput = {
   normalizedUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishAttempts?: Prisma.SortOrder
+}
+
+export type UrlAvgOrderByAggregateInput = {
+  publishAttempts?: Prisma.SortOrder
 }
 
 export type UrlMaxOrderByAggregateInput = {
@@ -322,6 +402,8 @@ export type UrlMaxOrderByAggregateInput = {
   normalizedUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishAttempts?: Prisma.SortOrder
 }
 
 export type UrlMinOrderByAggregateInput = {
@@ -331,6 +413,24 @@ export type UrlMinOrderByAggregateInput = {
   normalizedUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  publishedAt?: Prisma.SortOrder
+  publishAttempts?: Prisma.SortOrder
+}
+
+export type UrlSumOrderByAggregateInput = {
+  publishAttempts?: Prisma.SortOrder
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 
@@ -342,6 +442,8 @@ export type UrlSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
   normalizedUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  publishedAt?: boolean
+  publishAttempts?: boolean
 }, ExtArgs["result"]["url"]>
 
 export type UrlSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -351,6 +453,8 @@ export type UrlSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extension
   normalizedUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  publishedAt?: boolean
+  publishAttempts?: boolean
 }, ExtArgs["result"]["url"]>
 
 export type UrlSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -360,6 +464,8 @@ export type UrlSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extension
   normalizedUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  publishedAt?: boolean
+  publishAttempts?: boolean
 }, ExtArgs["result"]["url"]>
 
 export type UrlSelectScalar = {
@@ -369,9 +475,11 @@ export type UrlSelectScalar = {
   normalizedUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  publishedAt?: boolean
+  publishAttempts?: boolean
 }
 
-export type UrlOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "url" | "normalizedUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["url"]>
+export type UrlOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "url" | "normalizedUrl" | "createdAt" | "updatedAt" | "publishedAt" | "publishAttempts", ExtArgs["result"]["url"]>
 
 export type $UrlPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Url"
@@ -383,6 +491,8 @@ export type $UrlPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
     normalizedUrl: string
     createdAt: Date
     updatedAt: Date
+    publishedAt: Date | null
+    publishAttempts: number
   }, ExtArgs["result"]["url"]>
   composites: {}
 }
@@ -812,6 +922,8 @@ export interface UrlFieldRefs {
   readonly normalizedUrl: Prisma.FieldRef<"Url", 'String'>
   readonly createdAt: Prisma.FieldRef<"Url", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Url", 'DateTime'>
+  readonly publishedAt: Prisma.FieldRef<"Url", 'DateTime'>
+  readonly publishAttempts: Prisma.FieldRef<"Url", 'Int'>
 }
     
 
