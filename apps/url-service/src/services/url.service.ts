@@ -6,6 +6,8 @@ import {
 } from "../DTO/CreateURL.DTO.js";
 import urlRepository from "../repositories/url.repository.js";
 import { normalizeURL } from "../utils/normalizeURL.utils.js";
+import { validateTargetUrl } from "../utils/validateTargetUrl.utils.js";
+import { env } from "../config/env.js";
 import { Url } from "../generated/prisma/client.js";
 import rabbitMQ from "./rabbitMQ/rabbit.service.js";
 import logger from "../logger.js";
@@ -14,8 +16,13 @@ class UrlService {
   async addNewURL(
     data: URLCreateArgument,
   ): Promise<{ url: Url; isNewUrl: boolean }> {
+    await validateTargetUrl(data.url);
+    const normalizedUrl = normalizeURL(data.url);
+    if (normalizedUrl.length > env.MAX_URL_LENGTH) {
+      throw new AppError("Bad request. Url too long", 400);
+    }
     const createNewURL = await urlRepository.createUrl({
-      normalizedUrl: normalizeURL(data.url),
+      normalizedUrl,
       userId: data.userId,
       url: data.url,
     });

@@ -2,11 +2,11 @@ import { Request, Response } from "express";
 import urlService from "../services/url.service.js";
 import { ResponseSuccessStructure } from "@rocket/shared";
 
-
 class UrlController {
   async addUrl(req: Request, res: Response): Promise<void> {
     const reqUrl = req?.body?.url;
     const userId = req?.user?.id;
+
     const requiredObject = {
       userId,
       url: reqUrl,

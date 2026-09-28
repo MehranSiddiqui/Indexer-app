@@ -1,40 +1,37 @@
 import { AppError } from "@rocket/shared";
 import ipaddr from "ipaddr.js";
-const MAX_URL_LENGTH = 2048;
+import { lookup } from "node:dns/promises";
+import { env } from "../config/env.js";
+const MAX_URL_LENGTH = env.MAX_URL_LENGTH;
+const DNS_TIMEOUT_MS = 3000;
 const availableProtocol = new Set(["http:", "https:"]);
 const allowedPorts = new Map([
   ["http:", 80],
   ["https:", 443],
 ]);
 
-const validatePort = async (parseUrl: URL): Promise<void> => {
-  const urlPort = parseUrl.port;
-  let currentPort;
-  if (urlPort) {
-    currentPort = parseInt(urlPort, 10);
-  } else {
-    currentPort = allowedPorts.get(parseUrl.protocol);
-    const arePortAllowed = currentPort === allowedPorts.get(parseUrl.protocol);
+const validatePort = (parseUrl: URL): void => {
+  const defaultPort = allowedPorts.get(parseUrl.protocol);
+  const currentPort = parseUrl.port ? parseInt(parseUrl.port, 10) : defaultPort;
 
-    if (!arePortAllowed)
-      throw new AppError("Bad request. Port not allowed", 400);
+  if (currentPort !== defaultPort) {
+    throw new AppError("Bad request. Port not allowed", 400);
   }
 };
 
-const validateCredentials = async (parseUrl: URL): Promise<void> => {
-  const isEmptyUserName = parseUrl.username;
-  const isEmptyPasswordAvailable = parseUrl.password;
-  if (!isEmptyUserName && !isEmptyPasswordAvailable) {
-    throw new AppError("Bad request. Credentials not available", 400);
+const validateCredentials = (parseUrl: URL): void => {
+  if (parseUrl.username || parseUrl.password) {
+    throw new AppError("Bad request. Credentials not allowed", 400);
   }
 };
 
-const validateProtocol = async (parseUrl: URL): Promise<void> => {
+const validateProtocol = (parseUrl: URL): void => {
   if (!availableProtocol.has(parseUrl.protocol)) {
     throw new AppError("Bad request. Defined protocol of url not allowed", 400);
   }
 };
-const validateIpLiterals = (host: string): boolean => {
+
+const isPublicIp = (host: string): boolean => {
   let parsed: ipaddr.IPv4 | ipaddr.IPv6;
   try {
     parsed = ipaddr.parse(host);
@@ -42,6 +39,7 @@ const validateIpLiterals = (host: string): boolean => {
     return false;
   }
 
+  // ::ffff:127.0.0.1 style addresses: unwrap to plain IPv4 before range check
   if (
     parsed.kind() === "ipv6" &&
     (parsed as ipaddr.IPv6).isIPv4MappedAddress()
@@ -51,39 +49,80 @@ const validateIpLiterals = (host: string): boolean => {
 
   return parsed.range() === "unicast";
 };
-const normalizeAndValidateHostName = async (parseUrl: URL): Promise<void> => {
-  const hostName = parseUrl.hostname;
-  const normalizeHostName = hostName.toLowerCase().trim();
-  const removeSquareBraces = (): string => {
-    if (normalizeHostName.startsWith("[") && normalizeHostName.endsWith("]"))
-      return normalizeHostName.slice(1, -1);
 
-    return normalizeHostName;
-  };
-  const areIPsValid = validateIpLiterals(removeSquareBraces());
+// Returns the hostname that still needs a DNS check, or null for IP literals
+const validateHostName = (parseUrl: URL): string | null => {
+  let hostName = parseUrl.hostname.toLowerCase().trim();
 
-  if (areIPsValid) {
+  if (hostName.startsWith("[") && hostName.endsWith("]")) {
+    hostName = hostName.slice(1, -1);
+  }
+
+  if (ipaddr.isValid(hostName)) {
+    if (!isPublicIp(hostName)) {
+      throw new AppError("Bad request. Defined IP not allowed", 400);
+    }
+    return null;
+  }
+
+  if (hostName.endsWith(".")) hostName = hostName.slice(0, -1);
+
+  if (
+    hostName === "localhost" ||
+    hostName.endsWith(".local") ||
+    hostName.endsWith(".localhost") ||
+    hostName.endsWith(".internal") ||
+    !hostName.includes(".")
+  ) {
+    throw new AppError("Bad request. Defined hostname not allowed", 400);
+  }
+  return hostName;
+};
+
+const validateResolvedAddresses = async (hostName: string): Promise<void> => {
+  let timer: NodeJS.Timeout | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("DNS lookup timed out")),
+      DNS_TIMEOUT_MS,
+    );
+  });
+
+  try {
+    const records = await Promise.race([
+      lookup(hostName, { all: true }),
+      timeout,
+    ]);
     if (
-      normalizeHostName === "localhost" ||
-      normalizeHostName.endsWith(".local") ||
-      normalizeHostName.endsWith(".localhost") ||
-      normalizeHostName.endsWith(".internal")
+      records.length === 0 ||
+      !records.every((record) => isPublicIp(record.address))
     ) {
       throw new AppError("Bad request. Defined hostname not allowed", 400);
     }
-  } else {
-    throw new AppError("Bad request. Defined IP not allowed", 400);
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("Bad request. Hostname could not be resolved", 400);
+  } finally {
+    clearTimeout(timer);
   }
 };
 
 export const validateTargetUrl = async (url: string): Promise<void> => {
   if (!url) throw new AppError("Bad request. Url missing", 400);
-  if (url?.length > MAX_URL_LENGTH) {
+  if (url.length > MAX_URL_LENGTH) {
     throw new AppError("Bad request. Url too long", 400);
   }
-  const parseUrl = new URL(url);
-  await validatePort(parseUrl);
-  await validateProtocol(parseUrl);
-  await validateCredentials(parseUrl);
-  await normalizeAndValidateHostName(parseUrl);
+
+  let parseUrl: URL;
+  try {
+    parseUrl = new URL(url);
+  } catch {
+    throw new AppError("Bad request. Invalid url", 400);
+  }
+
+  validateProtocol(parseUrl);
+  validatePort(parseUrl);
+  validateCredentials(parseUrl);
+  const hostToResolve = validateHostName(parseUrl);
+  if (hostToResolve) await validateResolvedAddresses(hostToResolve);
 };
