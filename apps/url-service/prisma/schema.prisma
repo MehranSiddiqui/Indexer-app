@@ -8,7 +8,14 @@ datasource db{
     provider = "postgresql"
 }
 
-
+enum UrlStatus {
+  Pending
+  Submitted
+  Failed
+  Indexed
+  Blocked
+  Queued
+}
 //DB STRUCTURE FOR PROJECTS
 model Project{
     id String @id @default(uuid())
@@ -29,6 +36,10 @@ model Url{
     updatedAt DateTime @updatedAt
     publishedAt DateTime?
     publishAttempts Int @default(0)
+
+    status          UrlStatus   @default(Pending)
+    statusReason    String?
+    statusUpdatedAt DateTime @default(now())
     @@unique([userId, normalizedUrl])
     @@index([userId])
 }
