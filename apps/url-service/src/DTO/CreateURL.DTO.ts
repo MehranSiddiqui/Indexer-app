@@ -1,3 +1,5 @@
+import { UrlStatus } from "../generated/prisma/enums.js";
+
 export interface URLCreateArgument {
   userId: string;
   url: string;
@@ -22,3 +24,10 @@ export type ReturnUrl = {
   id: string;
   url: string;
 };
+
+export interface UPDATE_URL_STATUS {
+  id: string;
+  userId: string;
+  status: UrlStatus;
+  reason: string;
+}

@@ -1,6 +1,11 @@
 import { Url } from "../generated/prisma/client.js";
 import { prisma } from "../config/prisma.js";
-import { GET_URL, GET_URL_BY_ID, URLArgument } from "../DTO/CreateURL.DTO.js";
+import {
+  GET_URL,
+  GET_URL_BY_ID,
+  UPDATE_URL_STATUS,
+  URLArgument,
+} from "../DTO/CreateURL.DTO.js";
 
 class UrlRepository {
   async createUrl(data: URLArgument): Promise<Url> {
@@ -8,7 +13,7 @@ class UrlRepository {
     INSERT INTO "Url" ("id","normalizedUrl","userId","url","createdAt","updatedAt") VALUES (gen_random_uuid(),${data?.normalizedUrl},${data?.userId},${data?.url},now(),now())
     
     ON CONFLICT ("userId","normalizedUrl")
-    DO UPDATE SET "updatedAt"=now(),"publishedAt"=NULL 
+    DO UPDATE SET "updatedAt"=now(),"publishedAt"=NULL ,"status" = 'Pending', "statusReason"=NULL,"statusUpdatedAt"= now(), "publishAttempts"=0
     RETURNING *
     `;
 
@@ -16,12 +21,22 @@ class UrlRepository {
   }
   async increaseAttempt(data: GET_URL_BY_ID): Promise<void> {
     await prisma.$executeRaw`
-    Update "Url" set "publishAttempts" = "publishAttempts" + 1 where "id"= ${data?.id} and "userId" = ${data?.userId} `;
+  UPDATE "Url"
+  SET
+    "publishAttempts" = "publishAttempts" + 1,
+    "status" = CASE
+      WHEN "publishAttempts" < 5 THEN "status"
+      ELSE 'Failed'
+    END,
+    "statusUpdatedAt"=now()
+  WHERE "id" = ${data?.id}
+    AND "userId" = ${data?.userId}
+`;
   }
-  
+
   async markPublished(data: GET_URL_BY_ID): Promise<void> {
     await prisma.$executeRaw`
-    UPDATE "Url" SET "publishedAt"=now() WHERE "id"=${data?.id} AND "userId"=${data?.userId}`;
+    UPDATE "Url" SET "publishedAt"=now(), "status"='Queued',"statusUpdatedAt"=now() WHERE "id"=${data?.id} AND "userId"=${data?.userId}`;
   }
 
   async findURLById(data: GET_URL_BY_ID): Promise<Url | null> {
@@ -44,9 +59,15 @@ class UrlRepository {
 
   async getUnPublishedUrls(limit: number): Promise<Url[]> {
     return await prisma.$queryRaw<Url[]>`
-    Select * from "Url" where "publishedAt" is NULL
+    Select * from "Url" where "status" = 'Pending' 
     ORDER BY "publishAttempts" ASC, "createdAt" ASC
     limit ${limit}
+    `;
+  }
+
+  async updateURLStatus(data: UPDATE_URL_STATUS): Promise<void> {
+    await prisma.$executeRaw<URL>`
+    UPDATE "Url" SET "status"=${data?.status}, "statusReason"=${data?.reason} where "id"=${data?.id} AND "userId"=${data?.userId}
     `;
   }
 }

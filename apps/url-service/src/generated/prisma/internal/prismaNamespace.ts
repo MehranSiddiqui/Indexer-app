@@ -612,7 +612,10 @@ export const UrlScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   publishedAt: 'publishedAt',
-  publishAttempts: 'publishAttempts'
+  publishAttempts: 'publishAttempts',
+  status: 'status',
+  statusReason: 'statusReason',
+  statusUpdatedAt: 'statusUpdatedAt'
 } as const
 
 export type UrlScalarFieldEnum = (typeof UrlScalarFieldEnum)[keyof typeof UrlScalarFieldEnum]
@@ -687,6 +690,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'UrlStatus'
+ */
+export type EnumUrlStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UrlStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'UrlStatus[]'
+ */
+export type ListEnumUrlStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UrlStatus[]'>
     
 
 

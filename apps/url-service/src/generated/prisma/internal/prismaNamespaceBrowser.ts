@@ -91,7 +91,10 @@ export const UrlScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   publishedAt: 'publishedAt',
-  publishAttempts: 'publishAttempts'
+  publishAttempts: 'publishAttempts',
+  status: 'status',
+  statusReason: 'statusReason',
+  statusUpdatedAt: 'statusUpdatedAt'
 } as const
 
 export type UrlScalarFieldEnum = (typeof UrlScalarFieldEnum)[keyof typeof UrlScalarFieldEnum]
