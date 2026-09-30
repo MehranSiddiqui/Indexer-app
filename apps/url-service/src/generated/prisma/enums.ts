@@ -15,7 +15,8 @@ export const UrlStatus = {
   Failed: 'Failed',
   Indexed: 'Indexed',
   Blocked: 'Blocked',
-  Queued: 'Queued'
+  Queued: 'Queued',
+  Aborted: 'Aborted'
 } as const
 
 export type UrlStatus = (typeof UrlStatus)[keyof typeof UrlStatus]

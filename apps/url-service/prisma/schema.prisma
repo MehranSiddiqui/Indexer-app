@@ -15,6 +15,7 @@ enum UrlStatus {
   Indexed
   Blocked
   Queued
+  Aborted
 }
 //DB STRUCTURE FOR PROJECTS
 model Project{
