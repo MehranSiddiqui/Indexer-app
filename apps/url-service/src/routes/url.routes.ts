@@ -25,4 +25,14 @@ urlRoute.get(
   urlController.getUrlById.bind(urlController),
 );
 
+urlRoute.delete(
+  "/delete-url/:id",
+  authMiddleware,
+  urlController.deleteUrl.bind(urlController),
+);
+urlRoute.patch(
+  "/update-url-status/:id/reindex",
+  authMiddleware,
+  urlController.updateUrl.bind(urlController),
+);
 export default urlRoute;
