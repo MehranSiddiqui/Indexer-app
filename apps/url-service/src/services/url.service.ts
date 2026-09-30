@@ -81,24 +81,18 @@ class UrlService {
     }
   }
 
-  async deleteURL(data: Url): Promise<void> {
-    try {
+  async deleteURL(data: GET_URL_BY_ID): Promise<void> {
+    
       const [deleted] = await urlRepository.deleteUrl(data);
       if (!deleted) throw new AppError("Url not found", 404);
-    } catch (error) {
-      logger.error({ err: error }, "Failed to delete url");
-      throw new AppError("Failed to delete url", 400);
-    }
+   
   }
 
-  async updateUrlStatus(data: UPDATE_URL_STATUS): Promise<void> {
-    try {
+  async updateUrlStatus(data: GET_URL_BY_ID): Promise<void> {
+   
       const [updatedUrl] = await urlRepository.updateURLStatus(data);
       if (!updatedUrl) throw new AppError("Url not found", 404);
-    } catch (error) {
-      logger.error({ err: error }, "Failed to update url");
-      throw new AppError("Failed to update url", 400);
-    }
+   
   }
 }
 

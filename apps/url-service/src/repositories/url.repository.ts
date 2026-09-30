@@ -65,9 +65,9 @@ class UrlRepository {
     `;
   }
 
-  async updateURLStatus(data: UPDATE_URL_STATUS): Promise<Url[]> {
+  async updateURLStatus(data: GET_URL_BY_ID): Promise<Url[]> {
     return await prisma.$queryRaw<Url[]>`
-    UPDATE "Url" SET "status"=${data?.status}, "statusReason"=${data?.reason} WHERE "id"=${data?.id} AND "userId"=${data?.userId}
+    UPDATE "Url" SET "status"='Pending', "statusReason"='Manual reindex initiated' WHERE "id"=${data?.id} AND "userId"=${data?.userId}
     RETURNING *
     `;
   }
