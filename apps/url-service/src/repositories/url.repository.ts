@@ -74,7 +74,7 @@ class UrlRepository {
 
   async deleteUrl(data: GET_URL_BY_ID): Promise<Url[]> {
     return await prisma.$queryRaw<Url[]>`
-    UPDATE "Url" SET "isDeleted"=true, "deletedAt" = now(),status = 'Aborted', "reason"='Deleted by user' WHERE "id"=${data?.id} AND "userId" = ${data?.userId} AND "isDeleted" = false AND "deletedAt" IS NULL
+    UPDATE "Url" SET "isDeleted"=true, "deletedAt" = now(),status = 'Aborted', "statusReason"='Deleted by user' WHERE "id"=${data?.id} AND "userId" = ${data?.userId} AND "isDeleted" = false AND "deletedAt" IS NULL
     RETURNING *
     `;
   }
