@@ -65,9 +65,17 @@ class UrlRepository {
     `;
   }
 
-  async updateURLStatus(data: UPDATE_URL_STATUS): Promise<void> {
-    await prisma.$executeRaw<URL>`
-    UPDATE "Url" SET "status"=${data?.status}, "statusReason"=${data?.reason} where "id"=${data?.id} AND "userId"=${data?.userId}
+  async updateURLStatus(data: UPDATE_URL_STATUS): Promise<Url[]> {
+    return await prisma.$queryRaw<Url[]>`
+    UPDATE "Url" SET "status"=${data?.status}, "statusReason"=${data?.reason} WHERE "id"=${data?.id} AND "userId"=${data?.userId}
+    RETURNING *
+    `;
+  }
+
+  async deleteUrl(data: GET_URL_BY_ID): Promise<Url[]> {
+    return await prisma.$queryRaw<Url[]>`
+    UPDATE "Url" SET "isDeleted"=true, "deletedAt" = now() WHERE "id"=${data?.id} AND "userId" = ${data?.userId} AND "isDeleted" = false AND "deletedAt" IS NULL
+    RETURNING *
     `;
   }
 }

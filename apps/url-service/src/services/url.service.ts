@@ -2,6 +2,7 @@ import { AppError } from "@rocket/shared";
 import {
   GET_URL,
   GET_URL_BY_ID,
+  UPDATE_URL_STATUS,
   URLCreateArgument,
 } from "../DTO/CreateURL.DTO.js";
 import urlRepository from "../repositories/url.repository.js";
@@ -77,6 +78,26 @@ class UrlService {
     const urls = await urlRepository.getUnPublishedUrls(PUBLISH_BATCH_SIZE);
     for (const url of urls) {
       await this.publishUrl(url);
+    }
+  }
+
+  async deleteURL(data: Url): Promise<void> {
+    try {
+      const [deleted] = await urlRepository.deleteUrl(data);
+      if (!deleted) throw new AppError("Url not found", 404);
+    } catch (error) {
+      logger.error({ err: error }, "Failed to delete url");
+      throw new AppError("Failed to delete url", 400);
+    }
+  }
+
+  async updateUrlStatus(data: UPDATE_URL_STATUS): Promise<void> {
+    try {
+      const [updatedUrl] = await urlRepository.updateURLStatus(data);
+      if (!updatedUrl) throw new AppError("Url not found", 404);
+    } catch (error) {
+      logger.error({ err: error }, "Failed to update url");
+      throw new AppError("Failed to update url", 400);
     }
   }
 }
