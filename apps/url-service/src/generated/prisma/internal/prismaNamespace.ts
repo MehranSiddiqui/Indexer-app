@@ -613,6 +613,8 @@ export const UrlScalarFieldEnum = {
   updatedAt: 'updatedAt',
   publishedAt: 'publishedAt',
   publishAttempts: 'publishAttempts',
+  isDeleted: 'isDeleted',
+  deletedAt: 'deletedAt',
   status: 'status',
   statusReason: 'statusReason',
   statusUpdatedAt: 'statusUpdatedAt'
@@ -690,6 +692,13 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

@@ -92,6 +92,8 @@ export const UrlScalarFieldEnum = {
   updatedAt: 'updatedAt',
   publishedAt: 'publishedAt',
   publishAttempts: 'publishAttempts',
+  isDeleted: 'isDeleted',
+  deletedAt: 'deletedAt',
   status: 'status',
   statusReason: 'statusReason',
   statusUpdatedAt: 'statusUpdatedAt'

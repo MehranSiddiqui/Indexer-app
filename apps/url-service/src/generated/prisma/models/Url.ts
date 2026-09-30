@@ -43,6 +43,8 @@ export type UrlMinAggregateOutputType = {
   updatedAt: Date | null
   publishedAt: Date | null
   publishAttempts: number | null
+  isDeleted: boolean | null
+  deletedAt: Date | null
   status: $Enums.UrlStatus | null
   statusReason: string | null
   statusUpdatedAt: Date | null
@@ -57,6 +59,8 @@ export type UrlMaxAggregateOutputType = {
   updatedAt: Date | null
   publishedAt: Date | null
   publishAttempts: number | null
+  isDeleted: boolean | null
+  deletedAt: Date | null
   status: $Enums.UrlStatus | null
   statusReason: string | null
   statusUpdatedAt: Date | null
@@ -71,6 +75,8 @@ export type UrlCountAggregateOutputType = {
   updatedAt: number
   publishedAt: number
   publishAttempts: number
+  isDeleted: number
+  deletedAt: number
   status: number
   statusReason: number
   statusUpdatedAt: number
@@ -95,6 +101,8 @@ export type UrlMinAggregateInputType = {
   updatedAt?: true
   publishedAt?: true
   publishAttempts?: true
+  isDeleted?: true
+  deletedAt?: true
   status?: true
   statusReason?: true
   statusUpdatedAt?: true
@@ -109,6 +117,8 @@ export type UrlMaxAggregateInputType = {
   updatedAt?: true
   publishedAt?: true
   publishAttempts?: true
+  isDeleted?: true
+  deletedAt?: true
   status?: true
   statusReason?: true
   statusUpdatedAt?: true
@@ -123,6 +133,8 @@ export type UrlCountAggregateInputType = {
   updatedAt?: true
   publishedAt?: true
   publishAttempts?: true
+  isDeleted?: true
+  deletedAt?: true
   status?: true
   statusReason?: true
   statusUpdatedAt?: true
@@ -224,6 +236,8 @@ export type UrlGroupByOutputType = {
   updatedAt: Date
   publishedAt: Date | null
   publishAttempts: number
+  isDeleted: boolean
+  deletedAt: Date | null
   status: $Enums.UrlStatus
   statusReason: string | null
   statusUpdatedAt: Date
@@ -261,6 +275,8 @@ export type UrlWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Url"> | Date | string
   publishedAt?: Prisma.DateTimeNullableFilter<"Url"> | Date | string | null
   publishAttempts?: Prisma.IntFilter<"Url"> | number
+  isDeleted?: Prisma.BoolFilter<"Url"> | boolean
+  deletedAt?: Prisma.DateTimeNullableFilter<"Url"> | Date | string | null
   status?: Prisma.EnumUrlStatusFilter<"Url"> | $Enums.UrlStatus
   statusReason?: Prisma.StringNullableFilter<"Url"> | string | null
   statusUpdatedAt?: Prisma.DateTimeFilter<"Url"> | Date | string
@@ -275,6 +291,8 @@ export type UrlOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   publishAttempts?: Prisma.SortOrder
+  isDeleted?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   statusReason?: Prisma.SortOrderInput | Prisma.SortOrder
   statusUpdatedAt?: Prisma.SortOrder
@@ -293,6 +311,8 @@ export type UrlWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Url"> | Date | string
   publishedAt?: Prisma.DateTimeNullableFilter<"Url"> | Date | string | null
   publishAttempts?: Prisma.IntFilter<"Url"> | number
+  isDeleted?: Prisma.BoolFilter<"Url"> | boolean
+  deletedAt?: Prisma.DateTimeNullableFilter<"Url"> | Date | string | null
   status?: Prisma.EnumUrlStatusFilter<"Url"> | $Enums.UrlStatus
   statusReason?: Prisma.StringNullableFilter<"Url"> | string | null
   statusUpdatedAt?: Prisma.DateTimeFilter<"Url"> | Date | string
@@ -307,6 +327,8 @@ export type UrlOrderByWithAggregationInput = {
   updatedAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   publishAttempts?: Prisma.SortOrder
+  isDeleted?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   statusReason?: Prisma.SortOrderInput | Prisma.SortOrder
   statusUpdatedAt?: Prisma.SortOrder
@@ -329,6 +351,8 @@ export type UrlScalarWhereWithAggregatesInput = {
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Url"> | Date | string
   publishedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Url"> | Date | string | null
   publishAttempts?: Prisma.IntWithAggregatesFilter<"Url"> | number
+  isDeleted?: Prisma.BoolWithAggregatesFilter<"Url"> | boolean
+  deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Url"> | Date | string | null
   status?: Prisma.EnumUrlStatusWithAggregatesFilter<"Url"> | $Enums.UrlStatus
   statusReason?: Prisma.StringNullableWithAggregatesFilter<"Url"> | string | null
   statusUpdatedAt?: Prisma.DateTimeWithAggregatesFilter<"Url"> | Date | string
@@ -343,6 +367,8 @@ export type UrlCreateInput = {
   updatedAt?: Date | string
   publishedAt?: Date | string | null
   publishAttempts?: number
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
   status?: $Enums.UrlStatus
   statusReason?: string | null
   statusUpdatedAt?: Date | string
@@ -357,6 +383,8 @@ export type UrlUncheckedCreateInput = {
   updatedAt?: Date | string
   publishedAt?: Date | string | null
   publishAttempts?: number
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
   status?: $Enums.UrlStatus
   statusReason?: string | null
   statusUpdatedAt?: Date | string
@@ -371,6 +399,8 @@ export type UrlUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumUrlStatusFieldUpdateOperationsInput | $Enums.UrlStatus
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   statusUpdatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -385,6 +415,8 @@ export type UrlUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumUrlStatusFieldUpdateOperationsInput | $Enums.UrlStatus
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   statusUpdatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -399,6 +431,8 @@ export type UrlCreateManyInput = {
   updatedAt?: Date | string
   publishedAt?: Date | string | null
   publishAttempts?: number
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
   status?: $Enums.UrlStatus
   statusReason?: string | null
   statusUpdatedAt?: Date | string
@@ -413,6 +447,8 @@ export type UrlUpdateManyMutationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumUrlStatusFieldUpdateOperationsInput | $Enums.UrlStatus
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   statusUpdatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -427,6 +463,8 @@ export type UrlUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   publishAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumUrlStatusFieldUpdateOperationsInput | $Enums.UrlStatus
   statusReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   statusUpdatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -446,6 +484,8 @@ export type UrlCountOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   publishAttempts?: Prisma.SortOrder
+  isDeleted?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   statusReason?: Prisma.SortOrder
   statusUpdatedAt?: Prisma.SortOrder
@@ -464,6 +504,8 @@ export type UrlMaxOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   publishAttempts?: Prisma.SortOrder
+  isDeleted?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   statusReason?: Prisma.SortOrder
   statusUpdatedAt?: Prisma.SortOrder
@@ -478,6 +520,8 @@ export type UrlMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   publishedAt?: Prisma.SortOrder
   publishAttempts?: Prisma.SortOrder
+  isDeleted?: Prisma.SortOrder
+  deletedAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   statusReason?: Prisma.SortOrder
   statusUpdatedAt?: Prisma.SortOrder
@@ -499,6 +543,10 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
 export type EnumUrlStatusFieldUpdateOperationsInput = {
   set?: $Enums.UrlStatus
 }
@@ -518,6 +566,8 @@ export type UrlSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
   updatedAt?: boolean
   publishedAt?: boolean
   publishAttempts?: boolean
+  isDeleted?: boolean
+  deletedAt?: boolean
   status?: boolean
   statusReason?: boolean
   statusUpdatedAt?: boolean
@@ -532,6 +582,8 @@ export type UrlSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extension
   updatedAt?: boolean
   publishedAt?: boolean
   publishAttempts?: boolean
+  isDeleted?: boolean
+  deletedAt?: boolean
   status?: boolean
   statusReason?: boolean
   statusUpdatedAt?: boolean
@@ -546,6 +598,8 @@ export type UrlSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extension
   updatedAt?: boolean
   publishedAt?: boolean
   publishAttempts?: boolean
+  isDeleted?: boolean
+  deletedAt?: boolean
   status?: boolean
   statusReason?: boolean
   statusUpdatedAt?: boolean
@@ -560,12 +614,14 @@ export type UrlSelectScalar = {
   updatedAt?: boolean
   publishedAt?: boolean
   publishAttempts?: boolean
+  isDeleted?: boolean
+  deletedAt?: boolean
   status?: boolean
   statusReason?: boolean
   statusUpdatedAt?: boolean
 }
 
-export type UrlOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "url" | "normalizedUrl" | "createdAt" | "updatedAt" | "publishedAt" | "publishAttempts" | "status" | "statusReason" | "statusUpdatedAt", ExtArgs["result"]["url"]>
+export type UrlOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "url" | "normalizedUrl" | "createdAt" | "updatedAt" | "publishedAt" | "publishAttempts" | "isDeleted" | "deletedAt" | "status" | "statusReason" | "statusUpdatedAt", ExtArgs["result"]["url"]>
 
 export type $UrlPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Url"
@@ -579,6 +635,8 @@ export type $UrlPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
     updatedAt: Date
     publishedAt: Date | null
     publishAttempts: number
+    isDeleted: boolean
+    deletedAt: Date | null
     status: $Enums.UrlStatus
     statusReason: string | null
     statusUpdatedAt: Date
@@ -1013,6 +1071,8 @@ export interface UrlFieldRefs {
   readonly updatedAt: Prisma.FieldRef<"Url", 'DateTime'>
   readonly publishedAt: Prisma.FieldRef<"Url", 'DateTime'>
   readonly publishAttempts: Prisma.FieldRef<"Url", 'Int'>
+  readonly isDeleted: Prisma.FieldRef<"Url", 'Boolean'>
+  readonly deletedAt: Prisma.FieldRef<"Url", 'DateTime'>
   readonly status: Prisma.FieldRef<"Url", 'UrlStatus'>
   readonly statusReason: Prisma.FieldRef<"Url", 'String'>
   readonly statusUpdatedAt: Prisma.FieldRef<"Url", 'DateTime'>

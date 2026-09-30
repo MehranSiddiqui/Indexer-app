@@ -13,7 +13,7 @@ class UrlRepository {
     INSERT INTO "Url" ("id","normalizedUrl","userId","url","createdAt","updatedAt") VALUES (gen_random_uuid(),${data?.normalizedUrl},${data?.userId},${data?.url},now(),now())
     
     ON CONFLICT ("userId","normalizedUrl")
-    DO UPDATE SET "updatedAt"=now(),"publishedAt"=NULL ,"status" = 'Pending', "statusReason"=NULL,"statusUpdatedAt"= now(), "publishAttempts"=0
+    DO UPDATE SET "updatedAt"=now(),"publishedAt"=NULL ,"status" = 'Pending', "statusReason"=NULL,"statusUpdatedAt"= now(), "publishAttempts"=0, "isDeleted"=false, "deletedAt"=NULL
     RETURNING *
     `;
 
@@ -41,7 +41,7 @@ class UrlRepository {
 
   async findURLById(data: GET_URL_BY_ID): Promise<Url | null> {
     const [row] = await prisma.$queryRaw<Url[]>`
-    SELECT * FROM "Url" WHERE "id"=${data?.id} and "userId"=${data?.userId}`;
+    SELECT * FROM "Url" WHERE "id"=${data?.id} and "userId"=${data?.userId} and "isDeleted"=false and "deletedAt" IS NULL`;
 
     return row ?? null;
   }
@@ -52,14 +52,14 @@ class UrlRepository {
     const offSet = data?.offset;
 
     return await prisma.$queryRaw<Url[]>`
-    SELECT * FROM "Url" WHERE "userId"=${userID}
+    SELECT * FROM "Url" WHERE "userId"=${userID} and "isDeleted"=false and "deletedAt" IS NULL
     ORDER BY "createdAt" DESC
     LIMIT ${limit} OFFSET ${offSet}`;
   }
 
   async getUnPublishedUrls(limit: number): Promise<Url[]> {
     return await prisma.$queryRaw<Url[]>`
-    Select * from "Url" where "status" = 'Pending' 
+    Select * from "Url" where "status" = 'Pending'  and "isDeleted"=false and "deletedAt" IS NULL
     ORDER BY "publishAttempts" ASC, "createdAt" ASC
     limit ${limit}
     `;

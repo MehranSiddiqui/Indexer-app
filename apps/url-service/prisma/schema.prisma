@@ -36,7 +36,8 @@ model Url{
     updatedAt DateTime @updatedAt
     publishedAt DateTime?
     publishAttempts Int @default(0)
-
+    isDeleted Boolean @default(false)
+    deletedAt DateTime?
     status          UrlStatus   @default(Pending)
     statusReason    String?
     statusUpdatedAt DateTime @default(now())
