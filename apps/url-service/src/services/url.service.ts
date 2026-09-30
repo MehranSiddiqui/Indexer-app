@@ -40,13 +40,19 @@ class UrlService {
     return url;
   }
 
-  async getAllUrls(data: GET_URL): Promise<Url[]> {
-    const userUrls = await urlRepository.getAllUrls(data);
+  async getAllUrls(
+    data: GET_URL,
+  ): Promise<{ urls: Url[]; total: number; limit: number; offset: number }> {
+    const rows = await urlRepository.getAllUrls(data);
 
-    if (userUrls?.length <= 0)
-      throw new AppError("No urls added by this user!", 404);
+    if (rows.length === 0) {
+      return { urls: [], total: 0, limit: data.limit, offset: data.offset };
+    }
 
-    return userUrls;
+    const total = Number(rows[0].totalCount);
+    const urls = rows.map(({ totalCount, ...url }) => url);
+
+    return { urls, total, limit: data.limit, offset: data.offset };
   }
 
   async incrementPublishAttempts(data: GET_URL_BY_ID): Promise<void> {

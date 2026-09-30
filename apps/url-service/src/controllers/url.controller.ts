@@ -53,20 +53,14 @@ class UrlController {
   async getAllURls(req: Request, res: Response): Promise<void> {
     const userId = req.user.id;
     const { offset = 0, limit = 10 } = req.query;
-    const getAllURlsOfUser = await urlService.getAllUrls({
+    const result = await urlService.getAllUrls({
       userId,
       offset: Number(offset),
       limit: Number(limit),
     });
     res
       .status(200)
-      .json(
-        new ResponseSuccessStructure(
-          getAllURlsOfUser,
-          "List of all urls!",
-          200,
-        ),
-      );
+      .json(new ResponseSuccessStructure(result, "List of all urls!", 200));
   }
 
   async deleteUrl(req: Request, res: Response): Promise<void> {

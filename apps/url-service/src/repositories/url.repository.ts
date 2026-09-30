@@ -46,15 +46,16 @@ class UrlRepository {
     return row ?? null;
   }
 
-  async getAllUrls(data: GET_URL): Promise<Url[]> {
+  async getAllUrls(data: GET_URL): Promise<(Url & { totalCount: bigint })[]> {
     const userID = data?.userId;
     const limit = data?.limit;
     const offSet = data?.offset;
 
-    return await prisma.$queryRaw<Url[]>`
-    SELECT * FROM "Url" WHERE "userId"=${userID} and "isDeleted"=false and "deletedAt" IS NULL
-    ORDER BY "createdAt" DESC
-    LIMIT ${limit} OFFSET ${offSet}`;
+    return await prisma.$queryRaw<(Url & { totalCount: bigint })[]>`
+  SELECT *, COUNT(*) OVER() AS "totalCount" FROM "Url" WHERE "userId"=${userID} and "isDeleted"=false and "deletedAt" IS NULL
+  ORDER BY "createdAt" DESC
+  LIMIT ${limit} OFFSET ${offSet}
+  `;
   }
 
   async getUnPublishedUrls(limit: number): Promise<Url[]> {
