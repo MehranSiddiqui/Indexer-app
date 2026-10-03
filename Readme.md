@@ -236,10 +236,60 @@ Url
 ## Open items carried into Day 2
 
 - `Project` model is still physically present in `schema.prisma`, fully disconnected (no relation, no `userId`) — pending decision: delete it now, or keep as a placeholder for later
-- `prisma migrate dev` not run yet — schema needs to be finalized first
-- `src/config/prisma.ts` not built yet (PrismaClient + `@prisma/adapter-pg` + `pg.Pool`, mirroring auth-service's singleton pattern) — blocked on migration
-- Rest of `src/` folder skeleton not built: `constants`, `controllers`, `services`, `repositories`, `routes`, `DTO`, `types`, `utils`, `validators`
-- Cross-service authentication approach undecided: does url-service verify the auth-service-issued JWT locally (needs a shared `JWT_ACCESS_SECRET`), or call auth-service's API per request to validate the session?
+- ✅ Resolved: `prisma migrate dev` run (several times, including recoveries from failed migrations — see Milestone 4)
+- ✅ Resolved: `src/config/prisma.ts` built and in use throughout the repository layer
+- ✅ Resolved: full `src/` skeleton built out — `controllers`, `services`, `repositories`, `DTO`, `utils`
+- Cross-service authentication approach still undecided: does url-service verify the auth-service-issued JWT locally (needs a shared `JWT_ACCESS_SECRET`), or call auth-service's API per request to validate the session? (`req.user` is populated somewhere upstream of the controllers reviewed below, but the mechanism wasn't part of this stretch of work)
+
+## Milestone 2 — SSRF-Safe URL Validation (Phase 0 hardening)
+
+`src/utils/validateTargetUrl.utils.ts`, called from `url.service.ts#addNewURL` before normalization/insert. Layered checks, in order:
+- **Length** — rejects before parsing if the raw URL exceeds `env.MAX_URL_LENGTH` (also re-checked after normalization, since normalization can change length)
+- **Protocol allowlist** — only `http:`/`https:`
+- **Port** — must match the scheme's own default exactly (80 for http, 443 for https); `URL.port` is empty string for the default, so empty is treated as the scheme default before comparing
+- **Credentials** — rejects any URL with a non-empty `username` or `password`
+- **Hostname blocklist** — `localhost`, `.local`, `.localhost`, `.internal`, and any no-dot hostname, after stripping IPv6 brackets and a trailing dot
+- **IP-literal range check** — via `ipaddr.js`; unwraps IPv4-mapped IPv6 (`::ffff:127.0.0.1`) before checking; only `range() === "unicast"` (public) passes
+- **DNS resolution** — for non-IP hostnames, resolves *all* A/AAAA records (`node:dns/promises` `lookup(host, {all:true})`) against a manual timeout race, and rejects if *any* resolved address is non-public (defends against a domain that round-robins between a public and a private address)
+
+**Known limitation, explicitly not solved here:** this only validates at submit time. It does not protect against a URL that resolves safely now but redirects to an internal address at crawl time, or DNS-rebinding between validation and the actual crawl. The Phase 1 pre-flight worker will need to re-validate every redirect hop and connect to the already-validated IP, not re-resolve the hostname.
+
+## Milestone 3 — Status Tracking System
+
+Added to `Url`: `status` (new `UrlStatus` enum — `Pending, Submitted, Failed, Indexed, Blocked, Queued, Aborted`), `statusReason` (nullable text), `statusUpdatedAt`.
+
+- `createUrl`'s `ON CONFLICT` resets `status→Pending`, clears `statusReason`, refreshes `statusUpdatedAt`, resets `publishAttempts→0` — a resubmit is treated as a fresh start (and, per Milestone 4, also revives a soft-deleted row)
+- `markPublished` sets `status→Queued`
+- `increaseAttempt` sets `status→Failed` once the retry cap is exceeded; because Postgres evaluates every expression in one `UPDATE ... SET` against the row's pre-update values, `WHEN "publishAttempts" < 5` actually trips on the row's *old* value of 5, i.e. the cap fires on the 6th failed attempt, not the 5th — verified live by inserting a row and calling `increaseAttempt` 7 times
+- `getUnPublishedUrls` (feeds the publish cron) filters on `"status" = 'Pending'`
+- A generic `updateURLStatus` repository method exists for writing any status value, but is intentionally **not** exposed through a public route (see Milestone 4) — it's reserved for whatever internal process ends up reporting `Submitted`/`Indexed`/`Blocked` back from the not-yet-built Phase 1 consumer
+
+**Known outstanding concern, not yet re-verified:** the `add_url_status` migration's backfill for pre-existing rows was written with a condition (`WHERE "publishedAt" IS NULL`) that reads inverted — rows that *were* published should backfill to `Queued`, rows that never were should stay `Pending`. This hasn't caused visible harm yet only because the table has been empty every time this migration ran; needs re-checking (and a follow-up migration if still wrong) once real data exists.
+
+## Milestone 4 — Soft Delete & Manual Re-index
+
+Added to `Url`: `isDeleted` (boolean, `@default(false)`), `deletedAt` (nullable timestamp).
+
+- Every read query that lists or fetches a URL (`findURLById`, `getAllUrls`, `getUnPublishedUrls`) now filters `"isDeleted"=false AND "deletedAt" IS NULL`
+- `deleteUrl` sets `isDeleted=true, deletedAt=now(), status='Aborted', statusReason='Deleted by user'`, guarded by `AND "isDeleted"=false` so a repeat delete call is a no-op (returns zero rows) instead of overwriting `deletedAt`
+- Resubmitting a previously-deleted URL (same `userId`+`normalizedUrl`) revives it via the `createUrl` upsert, which also resets `isDeleted`/`deletedAt`
+- **Design decision:** the "update status" endpoint was deliberately narrowed rather than left generic. Originally it accepted an arbitrary `status`/`reason` from the request body, which meant any authenticated user could set their own URL's status directly to `Indexed`/`Blocked`/`Submitted` — states that should only ever be written by the internal crawl pipeline. It's now a dedicated re-index action: the controller no longer reads `status`/`reason` from the body at all, and the repository/service hardcode `status='Pending', statusReason='Manual reindex initiated'`
+- Adding `Aborted` to the `UrlStatus` enum needed its own migration (`ALTER TYPE ... ADD VALUE`), separate from any migration that uses the new value in the same transaction — Postgres forbids referencing a brand-new enum value before the transaction that added it has committed
+
+## Milestone 5 — Pagination with Total Count
+
+`getAllUrls` now returns the total matching row count alongside the page, using a `COUNT(*) OVER()` window function rather than a second round-trip query.
+
+- Postgres `COUNT(*)` maps to JS `bigint`, which doesn't survive `JSON.stringify`/`res.json()` — the service converts it to `Number(...)` before it reaches the response
+- The window-function count is attached per-row, so it disappears entirely when the page has zero rows (offset past the last page, or a user with no URLs at all) — the service treats an empty result as `{ urls: [], total: 0 }` rather than reading `totalCount` off a nonexistent row
+- This also replaced the old behavior of throwing a 404 on an empty result — an empty page is a normal pagination outcome, not an error
+
+## Deferred Improvements (url-service)
+
+- **Publishing hardening** (deliberately deferred, not part of the three features above): RabbitMQ publisher confirms, a mandatory-flag + queue re-assertion on startup, `SKIP LOCKED` in the batch poll query. Known gap in the meantime: `publishUrl` sends the message and then marks it published as two separate steps — if the send succeeds but the mark-published write fails, the row stays `Pending` and gets re-sent by the next cron cycle (duplicate delivery risk)
+- Extract the retry-cap magic number (`5`, in `increaseAttempt`) into a named constant
+- Re-verify (and fix if still wrong) the inverted backfill condition noted in Milestone 3
+- Move `validateTargetUrl` into `packages/shared` once the Phase 1 pre-flight worker is built, per the standing "implement in url-service first, backport later" convention — and make sure that worker re-validates every redirect hop rather than trusting submit-time validation alone
 
 ## User Preferences for Mentoring
 

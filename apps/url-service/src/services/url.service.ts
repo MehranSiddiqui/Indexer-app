@@ -9,7 +9,7 @@ import urlRepository from "../repositories/url.repository.js";
 import { normalizeURL } from "../utils/normalizeURL.utils.js";
 import { validateTargetUrl } from "../utils/validateTargetUrl.utils.js";
 import { env } from "../config/env.js";
-import { Url } from "../generated/prisma/client.js";
+import { Prisma, Url } from "../generated/prisma/client.js";
 import rabbitMQ from "./rabbitMQ/rabbit.service.js";
 import logger from "../logger.js";
 
@@ -55,9 +55,12 @@ class UrlService {
     return { urls, total, limit: data.limit, offset: data.offset };
   }
 
-  async incrementPublishAttempts(data: GET_URL_BY_ID): Promise<void> {
+  async incrementPublishAttempts(
+    tx: Prisma.TransactionClient,
+    data: GET_URL_BY_ID,
+  ): Promise<void> {
     try {
-      await urlRepository.increaseAttempt(data);
+      await urlRepository.increaseAttempt(tx, data);
     } catch (err) {
       logger.error(
         { err, urlId: data?.id },
@@ -66,24 +69,29 @@ class UrlService {
     }
   }
 
-  async publishUrl(data: Url): Promise<void> {
+  async publishUrl(tx: Prisma.TransactionClient, data: Url): Promise<void> {
     try {
       await rabbitMQ.sendMessage(JSON.stringify(data));
-      await urlRepository.markPublished({ id: data?.id, userId: data?.userId });
+      await urlRepository.markPublished(tx, {
+        id: data?.id,
+        userId: data?.userId,
+      });
     } catch (err) {
       logger.error(
         { err, urlId: data?.id },
         "Failed to publish url, will rerun publishing with cron",
       );
-      await this.incrementPublishAttempts(data);
+      await this.incrementPublishAttempts(tx, data);
     }
   }
 
   async getUnPublishedURLS(): Promise<void> {
     const PUBLISH_BATCH_SIZE = 20;
-    const urls = await urlRepository.getUnPublishedUrls(PUBLISH_BATCH_SIZE);
-    for (const url of urls) {
-      await this.publishUrl(url);
+    for (let i = 0; i < PUBLISH_BATCH_SIZE; i++) {
+      const processed = await urlRepository.withNextPendingUrl((tx, url) =>
+        this.publishUrl(tx, url),
+      );
+      if (processed === null) break;
     }
   }
 

@@ -1,4 +1,4 @@
-import { Url } from "../generated/prisma/client.js";
+import { Prisma, Url } from "../generated/prisma/client.js";
 import { prisma } from "../config/prisma.js";
 import {
   GET_URL,
@@ -19,8 +19,11 @@ class UrlRepository {
 
     return row;
   }
-  async increaseAttempt(data: GET_URL_BY_ID): Promise<void> {
-    await prisma.$executeRaw`
+  async increaseAttempt(
+    tx: Prisma.TransactionClient,
+    data: GET_URL_BY_ID,
+  ): Promise<void> {
+    await tx.$executeRaw`
   UPDATE "Url"
   SET
     "publishAttempts" = "publishAttempts" + 1,
@@ -34,8 +37,11 @@ class UrlRepository {
 `;
   }
 
-  async markPublished(data: GET_URL_BY_ID): Promise<void> {
-    await prisma.$executeRaw`
+  async markPublished(
+    tx: Prisma.TransactionClient,
+    data: GET_URL_BY_ID,
+  ): Promise<void> {
+    await tx.$executeRaw`
     UPDATE "Url" SET "publishedAt"=now(), "status"='Queued',"statusUpdatedAt"=now() WHERE "id"=${data?.id} AND "userId"=${data?.userId}`;
   }
 
@@ -58,12 +64,27 @@ class UrlRepository {
   `;
   }
 
-  async getUnPublishedUrls(limit: number): Promise<Url[]> {
-    return await prisma.$queryRaw<Url[]>`
-    Select * from "Url" where "status" = 'Pending'  and "isDeleted"=false and "deletedAt" IS NULL
+
+  private async claimNextPendingUrl(
+    tx: Prisma.TransactionClient,
+  ): Promise<Url | null> {
+    const [row] = await tx.$queryRaw<Url[]>`
+    SELECT * FROM "Url" WHERE "status" = 'Pending' and "isDeleted"=false and "deletedAt" IS NULL
     ORDER BY "publishAttempts" ASC, "createdAt" ASC
-    limit ${limit}
+    LIMIT 1
+    FOR UPDATE SKIP LOCKED
     `;
+    return row ?? null;
+  }
+
+  async withNextPendingUrl<T>(
+    work: (tx: Prisma.TransactionClient, url: Url) => Promise<T>,
+  ): Promise<T | null> {
+    return await prisma.$transaction(async (tx) => {
+      const url = await this.claimNextPendingUrl(tx);
+      if (!url) return null;
+      return await work(tx, url);
+    });
   }
 
   async updateURLStatus(data: GET_URL_BY_ID): Promise<Url[]> {

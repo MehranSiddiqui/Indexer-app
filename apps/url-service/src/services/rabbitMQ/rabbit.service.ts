@@ -1,6 +1,6 @@
 import { AppError } from "@rocket/shared";
 import { env } from "../../config/env.js";
-import { connect, Channel, ChannelModel } from "amqplib";
+import { connect, Channel, ChannelModel, ConfirmChannel } from "amqplib";
 import logger from "../../logger.js";
 
 const url: string = env.RABBITMQ_URL;
@@ -14,7 +14,7 @@ const sleep = (ms: number): Promise<void> => {
 };
 
 class RabbitMQ {
-  public channel?: Channel;
+  public channel?: ConfirmChannel;
   private connectionModel?: ChannelModel;
   // Guards against two reconnect loops running at once (e.g. connection and channel both firing "close" for the same underlying disconnect).
   private isConnecting = false;
@@ -42,7 +42,7 @@ class RabbitMQ {
     for (;;) {
       try {
         const connectionModel = await connect(url);
-        const channel = await connectionModel.createChannel();
+        const channel = await connectionModel.createConfirmChannel();
         await channel.assertQueue(queue, { durable: true });
         this.connectionModel = connectionModel;
         this.channel = channel;
@@ -120,15 +120,27 @@ class RabbitMQ {
       throw new AppError("RabbitMQ channel is not initialized", 503);
     }
     const channel = this.channel;
-    try {
-      channel.sendToQueue(queue, Buffer.from(message), {
-        persistent: true,
-      });
-      logger.info(`Message sent to ${queue}`);
-    } catch (error) {
-      logger.error({ err: error }, "Error sending message to RabbitMQ");
-      throw new AppError("Error sending to RabbitMQ", 500);
-    }
+    return new Promise<void>((res, rej) => {
+      try {
+        channel.sendToQueue(
+          queue,
+          Buffer.from(message),
+          { persistent: true },
+          (err) => {
+            if (err) {
+              logger.error({ err }, "RabbitMQ nacked the message");
+              rej(new AppError("Failed to send the message", 500));
+            } else {
+              logger.info(`Message confirmed by broker for ${queue}`);
+              res();
+            }
+          },
+        );
+      } catch (error) {
+        logger.error({ err: error }, "Failed to send the message");
+        rej(new AppError("Failed to send the message", 500));
+      }
+    });
   }
 
   async closeRabbitMQ(): Promise<void> {
